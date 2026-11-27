@@ -85,6 +85,10 @@ $("batal").onclick = resetForm;
 $("form").onsubmit = async (e) => {
   e.preventDefault();
   const isian = $("qTipe").value !== "pg";
+  if ($("qTipe").value === "lisan" && $("qSesi").value === "2") {
+    alert("Soal jawab lisan tidak dipakai di Sesi 2 (adu cepat). Pilih Sesi 1 atau 3, atau ubah tipe soal.");
+    return;
+  }
   const data = isian
     ? { sesi: Number($("qSesi").value), tipe: $("qTipe").value, paket: $("qPaket").value.trim(), soal: $("qSoal").value.trim(),
         a: null, b: null, c: null, d: null, kunci: $("qKunciIsian").value.trim() }
@@ -172,6 +176,7 @@ function parseWorkbook(wb) {
     if (!m.soal) errs.push("soal kosong");
     if (!isian) ["a", "b", "c", "d"].forEach((o) => { if (!m[o]) errs.push(`opsi ${o.toUpperCase()} kosong`); });
     if (!kunci) errs.push(isian ? "kunci isian kosong" : "kunci harus A/B/C/D");
+    if (lisan && sesi === 2) errs.push("soal lisan tidak dipakai di sesi 2");
     if (!m.soal && !m.a && !m.sesi) return; // baris kosong
     if (errs.length) bad.push(`Baris ${i + 2}: ${errs.join(", ")}`);
     else if (isian) ok.push({ sesi, tipe: lisan ? "lisan" : "isian", paket: m.paket || "", soal: m.soal, kunci });

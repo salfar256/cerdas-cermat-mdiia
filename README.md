@@ -25,9 +25,11 @@ Alamat setelah aktif: **https://salfar256.github.io/cerdas-cermat-mdiia/**
 **Tipe soal:**
 - **Pilihan ganda (pg):** dinilai otomatis.
 - **Isian singkat (isian):** peserta mengetik jawaban, juri menekan Benar/Salah.
-- **Jawab lisan (lisan):** peserta mengucapkan jawaban, tanpa mengetik; juri menekan Benar/Salah. Di sesi 2, HP menampilkan tombol SAYA JAWAB untuk mencatat urutan tercepat, lalu juri memanggil kelompok sesuai urutan.
+- **Jawab lisan (lisan):** peserta mengucapkan jawaban, tanpa mengetik; juri menekan Benar/Salah. Hanya untuk sesi 1 dan 3 (tidak dipakai di sesi 2 adu cepat).
 
 Satu paket boleh mencampur ketiganya.
+
+**Jeda waktu:** tombol ⏸ di operator membekukan timer di semua layar dan HP; tekan ▶ untuk melanjutkan dari sisa waktu yang sama.
 
 Urutan tercepat memakai **jam server Firebase**, bukan jam HP, sehingga adil walau jam HP berbeda.
 

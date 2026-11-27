@@ -242,3 +242,8 @@ body.layar { background: radial-gradient(circle at 20% 10%, #127a4f, var(--hijau
 /* layar: kunci isian */
 .layar-kunci { margin-top: 3vh; background: #1fae63; border: .3vw solid #b8ffd5; border-radius: 1.4vw; padding: 2vh 2vw; font-size: min(2.4vw, 4.2vh); font-weight: 800; text-align: center; }
 .layar-tunggu { margin-top: 3vh; text-align: center; font-size: min(2vw, 3.6vh); opacity: .85; }
+
+/* jeda waktu */
+.jeda-banner { background: var(--emas); color: #2b1d00; font-weight: 800; text-align: center; padding: .7rem; border-radius: 12px; margin-bottom: .8rem; }
+.dijeda .hp-opsi, .dijeda .buzz-btn, .dijeda form { pointer-events: none; opacity: .45; }
+.timer-ring.jeda circle:last-child { stroke: #9fb3a8; }

@@ -1,6 +1,6 @@
 import {
   ensureAnon, watchPublicRoom, SESI_NAMA, OPTIONS, esc, teamList, sortedTeams, secondsLeft,
-  getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
+  isPaused, getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
 } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
@@ -85,6 +85,7 @@ function renderMain(s, c, st) {
   }
   if (s.phase === "buzz") pesan = "🔔 " + esc(s.msg || "Buzzer dibuka!");
   if (s.phase === "ready") pesan = esc(s.msg || "Baca soal...");
+  if (isPaused(s)) pesan = "⏸ Waktu dijeda";
 
   let hasil = "";
   if (rev && s.session === 2) {
@@ -132,11 +133,12 @@ function tick() {
   ring.style.visibility = aktif ? "visible" : "hidden";
   if (!aktif) return;
   const left = secondsLeft(s);
-  const k = `${s.endsAt}`;
+  const k = `${s.runId}|${s.phase}|${s.buzzKey}`;
   totals[k] = Math.max(totals[k] || 0, left);
   const frac = totals[k] ? left / totals[k] : 0;
   $("ringArc").setAttribute("stroke-dashoffset", String(276.5 * (1 - frac)));
   $("ringNum").textContent = Math.ceil(left);
-  ring.classList.toggle("kritis", left <= 5);
+  ring.classList.toggle("kritis", left <= 5 && !isPaused(s));
+  ring.classList.toggle("jeda", isPaused(s));
 }
 setInterval(tick, 200);

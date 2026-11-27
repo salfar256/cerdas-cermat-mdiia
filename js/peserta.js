@@ -1,6 +1,6 @@
 import {
   db, ref, onValue, set, serverTimestamp, ensureAnon, watchPublicRoom,
-  SESI_NAMA, OPTIONS, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
+  SESI_NAMA, OPTIONS, isPaused, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
 } from "./common.js";
 
 const $ = (id) => document.getElementById(id);
@@ -86,7 +86,7 @@ function render() {
   const qid = s.qid;
   const sudah = qid && myAns[qid];
   const bkey = `${qid}|${s.buzzKey}`;
-  const sig = JSON.stringify([s.phase, s.session, qid, c?.qid, s.msg, s.turnTeam, s.answeringTeam, s.buzzKey, s.locked?.[me], sudah, buzzResult[bkey], room.reveal?.key, ranks.map((x) => x.score)]);
+  const sig = JSON.stringify([isPaused(s), s.phase, s.session, qid, c?.qid, s.msg, s.turnTeam, s.answeringTeam, s.buzzKey, s.locked?.[me], sudah, buzzResult[bkey], room.reveal?.key, ranks.map((x) => x.score)]);
   if (sig === renderSig) return;
   renderSig = sig;
 
@@ -146,6 +146,7 @@ function render() {
     h = hasil + `<div class="center"><span class="pill">Kunci: ${isian ? esc(key) : `${key} · ${esc(c[String(key).toLowerCase()] || "")}`}</span></div>`;
   }
   const ketik = $("isianTxt")?.value || "";
+  if (isPaused(s)) h = `<div class="jeda-banner">⏸ Waktu dijeda oleh juri</div><div class="dijeda">${h}</div>`;
   $("body").innerHTML = h;
   if ($("isianTxt")) { $("isianTxt").value = ketik; }
   tick();
@@ -208,7 +209,7 @@ function tick() {
   const s = room?.state;
   if (!s) return;
   const aktif = ["open", "ready", "buzz", "answering"].includes(s.phase);
-  $("timer").textContent = aktif ? `⏱ ${Math.ceil(secondsLeft(s))}` : "";
+  $("timer").textContent = aktif ? `${isPaused(s) ? "⏸" : "⏱"} ${Math.ceil(secondsLeft(s))}` : "";
 }
 setInterval(tick, 250);
 

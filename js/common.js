@@ -88,8 +88,12 @@ export async function ensureAnon() {
   return cred.user;
 }
 
+export const TIMER_PHASES = ["open", "ready", "buzz", "answering"];
+export const isPaused = (state) => !!(state && state.paused && TIMER_PHASES.includes(state.phase));
+
 export function secondsLeft(state) {
   if (!state || !state.endsAt) return 0;
+  if (isPaused(state)) return Math.max(0, (state.pausedLeft || 0) / 1000);
   return Math.max(0, (state.endsAt - serverNow()) / 1000);
 }
 

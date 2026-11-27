@@ -158,6 +158,7 @@ function soalUntukSesi(sesi) {
   const seen = new Set();
   return Object.entries(bank)
     .filter(([, q]) => Number(q.sesi) === sesi && (!paket || (q.paket || "") === paket))
+    .filter(([, q]) => !(sesi === 2 && q.tipe === "lisan"))   // sesi 2 tidak memakai soal lisan
     .sort((a, b) => (a[1].dibuat || 0) - (b[1].dibuat || 0))
     .map(([id, q]) => ({ id, ...q }))
     .filter((q) => { const k = normSoal(q.soal); if (seen.has(k)) return false; seen.add(k); return true; })
@@ -243,10 +244,27 @@ $("btnMulai").onclick = async () => {
   await update(R(), upd);
 };
 
+// ---------- Jeda waktu ----------
+// Saat dijeda: sisa waktu disimpan, endsAt digeser jauh ke depan agar tidak ada yang kedaluwarsa.
+$("btnJeda").onclick = async () => {
+  const s = S();
+  if (!["open", "ready", "buzz", "answering"].includes(s.phase)) return;
+  if (!s.paused) {
+    const left = Math.max(0, s.endsAt - serverNow());
+    const upd = { "state/paused": true, "state/pausedLeft": left, "state/endsAt": serverNow() + 6 * 3600 * 1000 };
+    logEntry(upd, `Waktu dijeda (sisa ${Math.ceil(left / 1000)} dtk)`);
+    await update(R(), upd);
+  } else {
+    const upd = { "state/paused": null, "state/pausedLeft": null, "state/endsAt": serverNow() + (s.pausedLeft || 0) };
+    logEntry(upd, "Waktu dilanjutkan");
+    await update(R(), upd);
+  }
+};
+
 $("btnTutup").onclick = async () => {
   const s = S();
   if (!["open", "buzz", "answering"].includes(s.phase)) return;
-  await update(R(), { "state/endsAt": serverNow() - 5000 });
+  await update(R(), { "state/endsAt": serverNow() - 5000, "state/paused": null, "state/pausedLeft": null });
 };
 
 $("btnLewati").onclick = async () => {
@@ -307,7 +325,7 @@ function engine() {
   if (!s.qid) return;
   const base = `${s.qid}|${s.runId}`;
   const ans = room.answers?.[s.qid] || {};
-  const now = serverNow();
+  const now = s.paused ? -Infinity : serverNow();
   if (s.phase === "open") {
     const expired = now > s.endsAt + GRACE_ANSWER;
     const isian = dinilaiJuri(room.current);
@@ -342,7 +360,7 @@ const TIPE_LABEL = { pg: "Pilihan ganda", isian: "Isian singkat", lisan: "Jawab 
 const ansStr = (a) => (a ? (a.choice ?? a.text ?? null) : null);
 
 async function toJudging() {
-  await update(R(), { "state/phase": "judging", "state/msg": "Menunggu keputusan juri..." });
+  await update(R(), { "state/paused": null, "state/pausedLeft": null, "state/phase": "judging", "state/msg": "Menunggu keputusan juri..." });
 }
 
 async function finalizeS1(verdict) {
@@ -360,6 +378,7 @@ async function finalizeS1(verdict) {
   if (pts) upd[`teams/${s.turnTeam}/score`] = increment(pts);
   sfx(upd, correct ? "benar" : "salah");
   logEntry(upd, `S1 no.${s.number} · ${nm}: ${ansStr(a) || (isian ? "lisan" : "tidak menjawab")} → ${correct ? "+" + pts : "0"}`);
+  upd["state/paused"] = null; upd["state/pausedLeft"] = null;
   await update(R(), upd);
 }
 
@@ -391,12 +410,13 @@ async function finalizeS2(judged) {
   upd.reveal = { qid: s.qid, key, results };
   sfx(upd, rank ? "benar" : "salah");
   logEntry(upd, `S2 no.${s.number} · ${ringkas.join(", ") || "tidak ada jawaban"}`);
+  upd["state/paused"] = null; upd["state/pausedLeft"] = null;
   await update(R(), upd);
 }
 
 async function openBuzz() {
   const st = settingsOf(room);
-  await update(R(), { "state/phase": "buzz", "state/endsAt": serverNow() + st.s3BuzzTime * 1000, "state/msg": "Buzzer dibuka! Tekan secepatnya" });
+  await update(R(), { "state/paused": null, "state/pausedLeft": null, "state/phase": "buzz", "state/endsAt": serverNow() + st.s3BuzzTime * 1000, "state/msg": "Buzzer dibuka! Tekan secepatnya" });
 }
 
 async function setAnswering(team) {
@@ -407,6 +427,7 @@ async function setAnswering(team) {
     "state/msg": `${room.teams[team].name} tercepat! Silakan menjawab`
   };
   sfx(upd, "buzzer");
+  upd["state/paused"] = null; upd["state/pausedLeft"] = null;
   await update(R(), upd);
 }
 
@@ -417,6 +438,7 @@ async function noBuzz() {
     reveal: { qid: s.qid, key: keyOf(s.qid), results: s.s3log || {} }
   };
   logEntry(upd, `S3 no.${s.number} · tidak ada yang menekan`);
+  upd["state/paused"] = null; upd["state/pausedLeft"] = null;
   await update(R(), upd);
 }
 
@@ -460,6 +482,7 @@ async function gradeS3(verdict) {
       upd.reveal = { qid: s.qid, key, results: s3log };
     }
   }
+  upd["state/paused"] = null; upd["state/pausedLeft"] = null;
   await update(R(), upd);
 }
 
@@ -476,6 +499,10 @@ function render() {
   renderTeams();
   renderLog();
   $("btnTutup").disabled = !["open", "buzz", "answering"].includes(s.phase);
+  const bisaJeda = ["open", "ready", "buzz", "answering"].includes(s.phase);
+  $("btnJeda").disabled = !bisaJeda;
+  $("btnJeda").textContent = bisaJeda && s.paused ? "▶ Lanjutkan waktu" : "⏸ Jeda waktu";
+  $("btnJeda").className = "btn " + (bisaJeda && s.paused ? "" : "emas");
   $("btnLewati").disabled = !s.qid || ["reveal", "idle", "final"].includes(s.phase);
 }
 
@@ -493,7 +520,7 @@ const FASE = {
 function renderStatus() {
   if (!room) return;
   const s = S();
-  const sisa = ["open", "ready", "buzz", "answering"].includes(s.phase) ? ` · ⏱ ${Math.ceil(secondsLeft(s))} dtk` : "";
+  const sisa = ["open", "ready", "buzz", "answering"].includes(s.phase) ? ` · ${s.paused ? "⏸ DIJEDA, sisa" : "⏱"} ${Math.ceil(secondsLeft(s))} dtk` : "";
   let extra = "";
   if (s.phase === "open" && s.qid) {
     const ans = room.answers?.[s.qid] || {};
