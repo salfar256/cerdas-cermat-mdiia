@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operator · Cerdas Cermat MDIIA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">🎛️ Operator<small id="namaLomba">Cerdas Cermat MDIIA</small></div>
+    <div class="spacer"></div>
+    <a href="bank.html" target="_blank">Bank Soal</a>
+    <button class="btn kecil garis hidden" id="keLobi">Ganti ruang</button>
+    <button class="btn kecil abu" id="keluar">Keluar</button>
+  </div>
+
+  <div id="login"></div>
+
+  <!-- ============ LOBI ============ -->
+  <div id="lobi" class="wrap hidden">
+    <div class="grid two">
+      <div class="card">
+        <h2>Buat Ruang Lomba Baru</h2>
+        <form id="formRuang" class="stack">
+          <div><label>Nama lomba</label><input type="text" id="rNama" value="Cerdas Cermat MDIIA" required></div>
+          <div class="row">
+            <div class="grow"><label>Paket soal</label><select id="rPaket"><option value="">Semua paket</option></select></div>
+            <div class="grow"><label>Jumlah kelompok</label>
+              <select id="rJumlah"><option value="3">3 kelompok</option><option value="4" selected>4 kelompok</option></select></div>
+          </div>
+          <div id="rTim" class="stack"></div>
+          <button class="btn emas">Buat ruang</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Ruang Lomba Tersimpan</h2>
+        <div id="daftarRuang" class="stack"><p class="muted">Memuat...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PERMAINAN ============ -->
+  <div id="game" class="wrap hidden">
+    <div class="grid op">
+      <div class="stack">
+        <div class="card">
+          <div class="sesi-tabs" id="sesiTabs">
+            <button class="btn abu" data-sesi="1">1 · Soal Kelompok</button>
+            <button class="btn abu" data-sesi="2">2 · Adu Cepat</button>
+            <button class="btn abu" data-sesi="3">3 · Rebutan</button>
+          </div>
+          <div class="status-box" id="status" style="margin-top:1rem">—</div>
+
+          <div style="margin-top:1rem" class="stack">
+            <div class="row">
+              <div class="grow"><label>Pilih soal</label><select id="pilihSoal"></select></div>
+              <div id="giliranWrap" class="hidden" style="min-width:170px"><label>Giliran</label><select id="pilihGiliran"></select></div>
+            </div>
+            <div class="row">
+              <button class="btn besar" id="btnMulai">▶ Tampilkan soal</button>
+              <button class="btn biru" id="btnTutup">⏹ Tutup sekarang</button>
+              <button class="btn abu" id="btnLewati">⏭ Hanguskan soal</button>
+            </div>
+          </div>
+
+          <div id="preview" class="soal-preview" style="margin-top:1rem"></div>
+          <div id="hasil" style="margin-top:.8rem"></div>
+        </div>
+
+        <div class="card">
+          <div class="row between"><h2 style="margin:0">Catatan</h2>
+            <div class="row">
+              <button class="btn abu kecil" id="btnIdle">Layar skor</button>
+              <button class="btn emas kecil" id="btnJuara">🏆 Tampilkan juara</button>
+            </div>
+          </div>
+          <div class="log" id="log" style="margin-top:.6rem"></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <div class="row between">
+            <div><div class="muted small">Kode ruang</div><div class="kode-ruang" id="kode">----</div></div>
+            <div class="stack small" style="text-align:right">
+              <a id="linkLayar" target="_blank">Buka layar proyektor ↗</a>
+              <a id="linkPeserta" target="_blank">Link peserta ↗</a>
+              <button class="btn abu kecil" id="salinPeserta">Salin link peserta</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row between"><h2 style="margin:0">Kelompok & Skor</h2>
+            <button class="btn abu kecil" id="btnResetSkor">Reset lomba</button></div>
+          <div id="tim" style="margin-top:.4rem"></div>
+          <p class="small muted" style="margin-bottom:0">Klik nama untuk mengganti. Tombol ± untuk koreksi skor manual. "Lepas HP" jika kelompok perlu masuk ulang dari HP lain.</p>
+        </div>
+
+        <div class="card">
+          <h2>Poin & Waktu</h2>
+          <form id="formSet" class="stack small">
+            <div class="grid two">
+              <div><label>Sesi 1: poin benar</label><input type="number" id="s1Correct"></div>
+              <div><label>Sesi 1: waktu (detik)</label><input type="number" id="s1Time"></div>
+              <div><label>Sesi 2: poin benar ke-1,2,3,4</label><input type="text" id="s2Points"></div>
+              <div><label>Sesi 2: waktu (detik)</label><input type="number" id="s2Time"></div>
+              <div><label>Sesi 3: poin benar</label><input type="number" id="s3Correct"></div>
+              <div><label>Sesi 3: pengurangan jika salah</label><input type="number" id="s3Wrong"></div>
+              <div><label>Sesi 3: jeda baca soal (detik)</label><input type="number" id="s3Delay"></div>
+              <div><label>Sesi 3: waktu buzzer (detik)</label><input type="number" id="s3BuzzTime"></div>
+              <div><label>Sesi 3: waktu menjawab (detik)</label><input type="number" id="s3AnswerTime"></div>
+            </div>
+            <div class="row"><button class="btn kecil">Simpan pengaturan</button><button type="button" class="btn abu kecil" id="setDefault">Kembalikan bawaan</button></div>
+          </form>
+          <label class="row small" style="margin-top:.8rem;font-weight:500"><input type="checkbox" id="suaraOp"> Bunyikan suara juga di perangkat operator</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/operator.js"></script>
+</body>
+</html>

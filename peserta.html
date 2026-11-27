@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0b5d3b">
+  <title>Peserta · Cerdas Cermat MDIIA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="hp">
+    <!-- Masuk -->
+    <div id="vMasuk" class="hp-body">
+      <div class="center"><div class="pill emas">Cerdas Cermat MDIIA</div><h1 style="margin-top:.6rem">Masuk Peserta</h1></div>
+      <form id="formKode" class="card stack" style="margin-top:1rem">
+        <div><label>Kode ruang</label>
+          <input type="text" id="kode" inputmode="numeric" maxlength="6" placeholder="mis. 4821" style="font-size:1.6rem;text-align:center;letter-spacing:6px;font-weight:800" required></div>
+        <button class="btn besar">Lanjut</button>
+        <div id="errKode" class="small center" style="color:var(--merah)"></div>
+      </form>
+    </div>
+
+    <!-- Pilih kelompok -->
+    <div id="vTim" class="hp-body hidden">
+      <div class="center"><h2>Pilih Kelompok Anda</h2><p class="muted small">Satu HP untuk satu kelompok.</p></div>
+      <div id="timPick" class="team-pick"></div>
+      <button class="btn abu" id="gantiKode" style="margin-top:1.2rem">Ganti kode ruang</button>
+    </div>
+
+    <!-- Main -->
+    <div id="vMain" class="hidden" style="display:flex;flex-direction:column;flex:1">
+      <div class="hp-head" id="head"><div><div class="nm" id="hNama"></div><div class="small" id="hSesi"></div></div><div class="sk" id="hSkor"></div></div>
+      <div class="hp-body" id="body"></div>
+      <div class="hp-timer" id="timer"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/peserta.js"></script>
+</body>
+</html>

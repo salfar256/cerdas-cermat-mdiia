@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Layar · Cerdas Cermat MDIIA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="layar">
+  <div class="start-overlay" id="overlay">
+    <div style="width:min(420px,90vw)">
+      <div class="pill emas">Layar Proyektor</div>
+      <h1 style="font-size:2.4rem;margin:.6rem 0">Cerdas Cermat MDIIA</h1>
+      <form id="formKode" class="stack">
+        <input type="text" id="kode" inputmode="numeric" placeholder="Kode ruang" style="font-size:1.6rem;text-align:center;letter-spacing:6px;font-weight:800" required>
+        <button class="btn emas besar" style="width:100%">Mulai tampilan (aktifkan suara)</button>
+        <div id="err" class="small" style="color:#ffb4b4"></div>
+      </form>
+      <p class="small" style="opacity:.7">Tekan F11 untuk layar penuh.</p>
+    </div>
+  </div>
+
+  <div class="layar-wrap">
+    <div class="layar-top">
+      <div class="judul" id="judul">Cerdas Cermat<small>Ma'had Dirosah Islamiyah Ibnu Aqil</small></div>
+      <div class="sesi" id="sesi">Sesi 1</div>
+      <div class="kode">Kode ruang<b id="kodeTampil">----</b></div>
+    </div>
+    <div class="layar-main" id="main"></div>
+    <div class="layar-score" id="skor"></div>
+  </div>
+
+  <script type="module" src="js/layar.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+{
+  "rules": {
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "bank": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+    "rooms": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      "$code": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "teams": {
+          "$team": {
+            "uid": {
+              ".write": "auth != null && !data.exists() && newData.val() === auth.uid"
+            }
+          },
+          ".read": "auth != null"
+        },
+        "answers": {
+          "$qid": {
+            "$team": {
+              ".write": "auth != null && !data.exists() && root.child('rooms/' + $code + '/teams/' + $team + '/uid').val() === auth.uid && root.child('rooms/' + $code + '/state/qid').val() === $qid && now <= root.child('rooms/' + $code + '/state/endsAt').val() + 1500 && ((root.child('rooms/' + $code + '/state/session').val() === 1 && root.child('rooms/' + $code + '/state/phase').val() === 'open' && root.child('rooms/' + $code + '/state/turnTeam').val() === $team) || (root.child('rooms/' + $code + '/state/session').val() === 2 && root.child('rooms/' + $code + '/state/phase').val() === 'open') || (root.child('rooms/' + $code + '/state/session').val() === 3 && root.child('rooms/' + $code + '/state/phase').val() === 'answering' && root.child('rooms/' + $code + '/state/answeringTeam').val() === $team))",
+              ".validate": "newData.hasChildren(['choice', 'ts']) && newData.child('choice').isString() && newData.child('choice').val().matches(/^[ABCD]$/) && newData.child('ts').val() === now",
+              ".read": "auth != null && root.child('rooms/' + $code + '/teams/' + $team + '/uid').val() === auth.uid"
+            }
+          }
+        },
+        "buzz": {
+          "$qid": {
+            "$attempt": {
+              ".write": "auth != null && !data.exists() && root.child('rooms/' + $code + '/teams/' + newData.child('team').val() + '/uid').val() === auth.uid && root.child('rooms/' + $code + '/state/qid').val() === $qid && root.child('rooms/' + $code + '/state/session').val() === 3 && root.child('rooms/' + $code + '/state/phase').val() === 'buzz' && root.child('rooms/' + $code + '/state/buzzKey').val() === $attempt && !root.child('rooms/' + $code + '/state/locked/' + newData.child('team').val()).exists() && now <= root.child('rooms/' + $code + '/state/endsAt').val() + 500",
+              ".validate": "newData.hasChildren(['team', 'ts']) && newData.child('team').isString() && newData.child('ts').val() === now"
+            }
+          }
+        },
+        ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "meta": {
+          ".read": "auth != null"
+        },
+        "settings": {
+          ".read": "auth != null"
+        },
+        "state": {
+          ".read": "auth != null"
+        },
+        "current": {
+          ".read": "auth != null"
+        },
+        "reveal": {
+          ".read": "auth != null"
+        }
+      }
+    }
+  }
+}

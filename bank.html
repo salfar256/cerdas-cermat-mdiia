@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bank Soal · Cerdas Cermat MDIIA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">📚 Bank Soal<small>Cerdas Cermat MDIIA</small></div>
+    <div class="spacer"></div>
+    <a href="operator.html">Ke Operator</a>
+    <a href="index.html">Beranda</a>
+  </div>
+
+  <div id="login"></div>
+
+  <div id="app" class="wrap hidden">
+    <div class="grid op">
+      <div class="card">
+        <div class="row between">
+          <h2 style="margin:0">Daftar Soal <span id="jumlah" class="pill"></span></h2>
+          <div class="row">
+            <select id="fSesi" style="width:auto">
+              <option value="">Semua sesi</option>
+              <option value="1">Sesi 1 · Kelompok</option>
+              <option value="2">Sesi 2 · Adu Cepat</option>
+              <option value="3">Sesi 3 · Rebutan</option>
+            </select>
+            <select id="fPaket" style="width:auto"><option value="">Semua paket</option></select>
+          </div>
+        </div>
+        <input type="text" id="fCari" placeholder="Cari teks soal..." style="margin:.8rem 0">
+        <div id="rekap" class="row small muted" style="margin-bottom:.5rem"></div>
+        <div style="overflow:auto;max-height:68vh">
+          <table>
+            <thead><tr><th>#</th><th>Sesi</th><th>Soal</th><th>Kunci</th><th></th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top:.8rem">
+          <button class="btn merah kecil" id="hapusFilter">Hapus semua soal yang tampil</button>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <h2 id="formJudul">Tambah Soal</h2>
+          <form id="form" class="stack">
+            <input type="hidden" id="qId">
+            <div class="row">
+              <div class="grow"><label>Sesi</label>
+                <select id="qSesi">
+                  <option value="1">Sesi 1 · Kelompok</option>
+                  <option value="2">Sesi 2 · Adu Cepat</option>
+                  <option value="3">Sesi 3 · Rebutan</option>
+                </select></div>
+              <div class="grow"><label>Paket <span class="muted small">(opsional)</span></label>
+                <input type="text" id="qPaket" placeholder="mis. Babak Final" list="paketList"></div>
+              <datalist id="paketList"></datalist>
+            </div>
+            <div><label>Pertanyaan</label><textarea id="qSoal" required></textarea></div>
+            <div class="grid two">
+              <div><label>A</label><input type="text" id="qA" required></div>
+              <div><label>B</label><input type="text" id="qB" required></div>
+              <div><label>C</label><input type="text" id="qC" required></div>
+              <div><label>D</label><input type="text" id="qD" required></div>
+            </div>
+            <div><label>Kunci jawaban</label>
+              <select id="qKunci"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+            <div class="row">
+              <button class="btn" id="simpan">Simpan</button>
+              <button class="btn abu" type="button" id="batal">Kosongkan</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Impor dari Excel / CSV</h2>
+          <p class="small muted">Kolom: <b>sesi, paket, soal, a, b, c, d, kunci</b>. Baris pertama adalah judul kolom. Sesi diisi 1, 2, atau 3. Kunci diisi A/B/C/D.</p>
+          <div class="row">
+            <button class="btn garis kecil" id="tplXlsx">⬇ Template Excel</button>
+            <button class="btn garis kecil" id="tplCsv">⬇ Template CSV</button>
+            <button class="btn garis kecil" id="ekspor">⬇ Ekspor semua soal</button>
+          </div>
+          <input type="file" id="file" accept=".xlsx,.xls,.csv" style="margin-top:.8rem">
+          <div id="impPreview" class="small" style="margin-top:.6rem"></div>
+          <button class="btn emas hidden" id="impGo" style="margin-top:.6rem">Impor soal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/bank.js"></script>
+</body>
+</html>
