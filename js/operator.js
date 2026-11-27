@@ -230,7 +230,7 @@ $("btnMulai").onclick = async () => {
   Object.assign(upd, {
     state,
     current: isIsian(q)
-      ? { qid, soal: q.soal, tipe: "isian", session: sesi, number: n }
+      ? { qid, soal: q.soal, tipe: q.tipe, session: sesi, number: n }
       : { qid, soal: q.soal, tipe: "pg", a: q.a, b: q.b, c: q.c, d: q.d, session: sesi, number: n },
     [`judge/${qid}`]: null,
     reveal: null,
@@ -310,7 +310,7 @@ function engine() {
   const now = serverNow();
   if (s.phase === "open") {
     const expired = now > s.endsAt + GRACE_ANSWER;
-    const isian = room.current?.tipe === "isian";
+    const isian = dinilaiJuri(room.current);
     if (s.session === 1 && (ans[s.turnTeam] || expired)) {
       if (isian) act(base + "|judge", toJudging); else act(base + "|fin", () => finalizeS1());
     }
@@ -328,14 +328,17 @@ function engine() {
   }
   if (s.phase === "answering") {
     if (ans[s.answeringTeam] || now > s.endsAt + GRACE_ANSWER) {
-      if (room.current?.tipe === "isian") act(`${base}|${s.buzzKey}|judge`, toJudging);
+      if (dinilaiJuri(room.current)) act(`${base}|${s.buzzKey}|judge`, toJudging);
       else act(`${base}|${s.buzzKey}|grade`, () => gradeS3());
     }
   }
 }
 setInterval(() => { engine(); renderStatus(); }, 250);
 
-const isIsian = (q) => (q?.tipe || "pg") === "isian";
+// Soal isian & lisan dinilai juri; pilihan ganda dinilai otomatis.
+const dinilaiJuri = (q) => ["isian", "lisan"].includes(q?.tipe);
+const isIsian = dinilaiJuri;
+const TIPE_LABEL = { pg: "Pilihan ganda", isian: "Isian singkat", lisan: "Jawab lisan" };
 const ansStr = (a) => (a ? (a.choice ?? a.text ?? null) : null);
 
 async function toJudging() {
@@ -346,7 +349,7 @@ async function finalizeS1(verdict) {
   const s = S(), st = settingsOf(room), key = keyOf(s.qid);
   const a = room.answers?.[s.qid]?.[s.turnTeam];
   const correct = verdict !== undefined ? verdict : (!!a && a.choice === key);
-  const isian = room.current?.tipe === "isian";
+  const isian = dinilaiJuri(room.current);
   const pts = correct ? st.s1Correct : 0;
   const nm = room.teams[s.turnTeam].name;
   const upd = {
@@ -422,7 +425,7 @@ async function gradeS3(verdict) {
   const team = s.answeringTeam, nm = room.teams[team].name;
   const a = room.answers?.[s.qid]?.[team];
   const correct = verdict !== undefined ? verdict : (!!a && a.choice === key);
-  const lisan = room.current?.tipe === "isian" ? "(lisan)" : null;
+  const lisan = dinilaiJuri(room.current) ? "(lisan)" : null;
   const s3log = { ...(s.s3log || {}) };
   const upd = {};
   if (correct) {
@@ -505,9 +508,9 @@ function renderPreview() {
   const c = room.current, s = S();
   if (!c) { $("preview").innerHTML = `<span class="muted">Belum ada soal yang ditampilkan.</span>`; $("hasil").innerHTML = ""; $("juri").innerHTML = ""; return; }
   const key = keyOf(c.qid);
-  const isian = c.tipe === "isian";
+  const isian = dinilaiJuri(c);
   $("preview").innerHTML = `<div class="row between"><span class="small muted">Soal tampil · no. ${c.number}</span>
-      <span class="pill ${isian ? "emas" : ""}">${isian ? "Isian singkat" : "Pilihan ganda"}</span></div>
+      <span class="pill ${isian ? "emas" : ""}">${TIPE_LABEL[c.tipe] || "Pilihan ganda"}</span></div>
     <div style="font-weight:700;white-space:pre-wrap;font-size:1.05rem;margin-top:.3rem">${esc(c.soal)}</div>
     ${isian ? "" : `<div class="opsi">${OPTIONS.map((o) => `<div class="${o === key ? "kunci" : ""}">${o}. ${esc(c[o.toLowerCase()])}</div>`).join("")}</div>`}
     <div class="kunci-box">🔑 Kunci jawaban: <b>${esc(isian ? key : `${key}. ${c[String(key).toLowerCase()] || ""}`)}</b></div>`;
@@ -517,7 +520,7 @@ function renderPreview() {
     const a = ans[t.id], r = res[t.id];
     let ket = "";
     if (r) ket = r.choice ? `${esc(r.choice)} ${r.correct ? "✔" : "✘"} (${r.points > 0 ? "+" : ""}${r.points})${r.rank ? " · urutan " + r.rank : ""}${r.ms != null ? " · " + (r.ms / 1000).toFixed(2) + " dtk" : ""}` : "—";
-    else if (a) ket = `menjawab <b>${esc(ansStr(a))}</b>`;
+    else if (a) ket = a.text === "(lisan)" ? "🗣️ siap menjawab lisan" : `menjawab <b>${esc(ansStr(a))}</b>`;
     else if (s.locked?.[t.id]) ket = "terkunci (sudah salah)";
     if (!ket) ket = isActive() ? "<span class='muted'>belum</span>" : "<span class='muted'>—</span>";
     return `<tr><td><span class="team-dot" style="display:inline-block;background:${t.color}"></span> ${esc(t.name)}</td><td>${ket}</td></tr>`;
@@ -529,22 +532,25 @@ function renderPreview() {
 // Panel juri untuk soal isian singkat: operator menentukan benar/salah.
 function renderJuri(c, s, ans) {
   const el = $("juri");
-  if (c.tipe !== "isian") { el.innerHTML = ""; return; }
+  if (!dinilaiJuri(c)) { el.innerHTML = ""; return; }
+  const lisan = c.tipe === "lisan";
+  const jawabTeks = (a) => !a ? `<span class="muted">${lisan ? "🗣️ Dengarkan jawaban lisan peserta" : "Belum ada jawaban tertulis (boleh dijawab lisan)"}</span>`
+    : a.text === "(lisan)" ? "🗣️ lisan" : esc(a.text);
   const nm = (id) => esc(room.teams[id]?.name || "");
   const tombol = `<div class="row"><button class="btn besar" data-v="1">✔ Benar</button><button class="btn besar merah" data-v="0">✘ Salah</button></div>`;
   if (s.session === 1 && ["open", "judging"].includes(s.phase)) {
     const a = ans[s.turnTeam];
     el.innerHTML = `<div class="juri-box"><div class="small muted">Penilaian juri · giliran ${nm(s.turnTeam)}</div>
-      <div class="juri-jawab">${a ? esc(a.text) : `<span class="muted">Belum ada jawaban tertulis (boleh dijawab lisan)</span>`}</div>${tombol}</div>`;
+      <div class="juri-jawab">${jawabTeks(a)}</div>${tombol}</div>`;
   } else if (s.session === 3 && ["answering", "judging"].includes(s.phase) && s.answeringTeam) {
     const a = ans[s.answeringTeam];
     el.innerHTML = `<div class="juri-box"><div class="small muted">Penilaian juri · ${nm(s.answeringTeam)} menjawab</div>
-      <div class="juri-jawab">${a ? esc(a.text) : `<span class="muted">Belum ada jawaban tertulis (boleh dijawab lisan)</span>`}</div>${tombol}</div>`;
+      <div class="juri-jawab">${jawabTeks(a)}</div>${tombol}</div>`;
   } else if (s.session === 2 && ["open", "judging"].includes(s.phase)) {
     const j = room.judge?.[c.qid] || {};
     const list = Object.entries(ans).map(([t, a]) => ({ t, ...a })).sort((x, y) => x.ts - y.ts);
-    el.innerHTML = `<div class="juri-box"><div class="small muted">Penilaian juri · urutan sesuai waktu masuk${s.phase === "open" ? " (jawaban masih bisa masuk)" : ""}</div>
-      <table><tbody>${list.map((a, i) => `<tr><td>${i + 1}. ${nm(a.t)}</td><td><b>${esc(a.text)}</b><div class="small muted">${((a.ts - (s.openedAt || a.ts)) / 1000).toFixed(2)} dtk</div></td>
+    el.innerHTML = `<div class="juri-box"><div class="small muted">Penilaian juri · urutan sesuai waktu ${lisan ? "menekan tombol — panggil kelompok sesuai urutan ini" : "masuk"}${s.phase === "open" ? " (masih bisa bertambah)" : ""}</div>
+      <table><tbody>${list.map((a, i) => `<tr><td>${i + 1}. ${nm(a.t)}</td><td><b>${jawabTeks(a)}</b><div class="small muted">${((a.ts - (s.openedAt || a.ts)) / 1000).toFixed(2)} dtk</div></td>
         <td style="white-space:nowrap"><button class="btn kecil ${j[a.t] === true ? "" : "abu"}" data-j="${a.t}|1">✔ Benar</button>
         <button class="btn kecil ${j[a.t] === false ? "merah" : "abu"}" data-j="${a.t}|0">✘ Salah</button></td></tr>`).join("") || `<tr><td class="muted">Belum ada jawaban masuk.</td></tr>`}</tbody></table>
       <button class="btn emas besar" data-umumkan="1" style="margin-top:.6rem" ${s.phase === "judging" ? "" : "disabled"}>📢 Umumkan hasil</button></div>`;

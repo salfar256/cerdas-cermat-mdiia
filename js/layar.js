@@ -91,7 +91,7 @@ function renderMain(s, c, st) {
     const rows = teamList(room).map((t) => ({ t, r: rev.results?.[t.id] || {} }))
       .sort((a, b) => (a.r.rank ?? 99) - (b.r.rank ?? 99) || (a.r.ms ?? 1e9) - (b.r.ms ?? 1e9));
     hasil = `<div class="hasil-tabel"><table><thead><tr><th>Kelompok</th><th>Jawaban</th><th>Waktu</th><th>Poin</th></tr></thead><tbody>
-      ${rows.map(({ t, r }) => `<tr><td>${esc(t.name)}</td><td>${r.choice ? esc(r.choice) + (r.correct ? " ✔" : " ✘") : "—"}</td>
+      ${rows.map(({ t, r }) => `<tr><td>${esc(t.name)}</td><td>${r.choice ? (r.choice === "(lisan)" ? "🗣️ lisan" : esc(r.choice)) + (r.correct ? " ✔" : " ✘") : "—"}</td>
         <td>${r.ms != null ? (r.ms / 1000).toFixed(2) + " dtk" : "—"}</td><td>${r.points ? "+" + r.points : "0"}</td></tr>`).join("")}</tbody></table></div>`;
   }
 
@@ -103,8 +103,8 @@ function renderMain(s, c, st) {
         <div class="angka" id="ringNum"></div></div></div>
     ${banner}
     <div class="layar-soal" style="${banner ? "margin-top:2vh" : ""}"><span class="nomor">Soal no. ${c.number}</span>${esc(c.soal)}</div>
-    ${c.tipe === "isian"
-      ? (key ? `<div class="layar-kunci">✔ Jawaban: ${esc(key)}</div>` : s.phase === "judging" ? `<div class="layar-tunggu">⚖️ Juri sedang menilai...</div>` : `<div class="layar-tunggu">✍️ Soal isian singkat</div>`)
+    ${["isian", "lisan"].includes(c.tipe)
+      ? (key ? `<div class="layar-kunci">✔ Jawaban: ${esc(key)}</div>` : s.phase === "judging" ? `<div class="layar-tunggu">⚖️ Juri sedang menilai...</div>` : `<div class="layar-tunggu">${c.tipe === "lisan" ? "🗣️ Jawab secara lisan" : "✍️ Soal isian singkat"}</div>`)
       : `<div class="layar-opsi">${OPTIONS.map((o) => `<div class="${key ? (o === key ? "benar" : "redup") : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></div>`).join("")}</div>`}
     ${hasil}`;
 }
