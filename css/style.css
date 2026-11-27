@@ -153,7 +153,8 @@ th { font-size: .8rem; text-transform: uppercase; color: var(--abu); letter-spac
 }
 .hp-opsi button b { background: var(--hijau); color: #fff; border-radius: 8px; width: 34px; height: 34px; display: grid; place-items: center; flex: none; }
 .hp-opsi button:active { border-color: var(--hijau); background: var(--hijau-muda); }
-.hp-opsi button:disabled { opacity: .5; }
+.hp-opsi button:disabled { opacity: .8; color: var(--teks); background: #fafbfa; cursor: default; }
+.hp-opsi button:disabled b { background: #8aa595; }
 .hp-opsi button.dipilih { border-color: var(--emas); background: var(--emas-muda); opacity: 1; }
 .hp-msg { text-align: center; font-size: 1.25rem; font-weight: 700; padding: 1.5rem 1rem; }
 .hp-msg .big { font-size: 3.2rem; display: block; margin-bottom: .4rem; }

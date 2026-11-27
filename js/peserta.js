@@ -106,20 +106,20 @@ function render() {
     h = msg("⏳", "Menunggu soal...");
   } else if (s.phase === "open" && s.session === 1) {
     if (s.turnTeam === me) h = sudah ? soalBox + msg("📨", `Jawaban terkirim: ${sudah}`, "Menunggu hasil...") : soalBox + opsi(true);
-    else h = msg("👀", `Giliran ${nm(s.turnTeam)}`, "Simak soalnya di layar") + soalBox;
+    else h = msg("👀", `Giliran ${nm(s.turnTeam)}`, "Pilihan jawaban hanya bisa dipilih kelompok yang mendapat giliran") + soalBox + opsi(false);
   } else if (s.phase === "open" && s.session === 2) {
     h = soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${sudah}`, "Menunggu kelompok lain...") : opsi(true));
   } else if (s.phase === "ready") {
-    h = soalBox + `<button class="buzz-btn" disabled>TUNGGU</button>` +
+    h = soalBox + `<button class="buzz-btn" disabled>TUNGGU</button>` + opsi(false) +
       (s.locked?.[me] ? msg("🔒", "Kelompok Anda sudah menjawab salah") : `<div class="center muted">Buzzer segera dibuka...</div>`);
   } else if (s.phase === "buzz") {
     const lk = s.locked?.[me];
     const kalah = buzzResult[bkey] === "kalah";
     h = soalBox + `<button class="buzz-btn" id="buzz" ${lk || kalah ? "disabled" : ""}>ANGKAT<br>TANGAN</button>` +
-      (lk ? msg("🔒", "Kelompok Anda sudah menjawab salah") : kalah ? `<div class="center muted">Kalah cepat...</div>` : "");
+      (lk ? msg("🔒", "Kelompok Anda sudah menjawab salah") : kalah ? `<div class="center muted">Kalah cepat...</div>` : "") + opsi(false);
   } else if (s.phase === "answering") {
     if (s.answeringTeam === me) h = msg("🙋", "Anda tercepat! Pilih jawaban:") + soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${sudah}`) : opsi(true));
-    else h = msg("🙋", `${nm(s.answeringTeam)} sedang menjawab`) + soalBox;
+    else h = msg("🙋", `${nm(s.answeringTeam)} sedang menjawab`) + soalBox + opsi(false);
   } else if (s.phase === "reveal") {
     const r = room.reveal?.results?.[me];
     const key = room.reveal?.key;
