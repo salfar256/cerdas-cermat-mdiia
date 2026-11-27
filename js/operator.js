@@ -147,30 +147,38 @@ $("sesiTabs").onclick = async (e) => {
 function isActive() { return ["open", "ready", "buzz", "answering"].includes(S().phase); }
 
 // ---------- Daftar soal ----------
+const normSoal = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+// Soal dianggap sudah dipakai jika ID-nya sudah dipakai ATAU teks soalnya sama dengan soal yang sudah dipakai
+// (mencegah soal kembar, misalnya karena paket terimpor dua kali).
 function soalUntukSesi(sesi) {
   const paket = room?.meta?.paket || "";
   const used = room?.used || {};
+  const usedText = new Set(Object.keys(used).map((id) => normSoal(bank[id]?.soal)).filter(Boolean));
+  const seen = new Set();
   return Object.entries(bank)
     .filter(([, q]) => Number(q.sesi) === sesi && (!paket || (q.paket || "") === paket))
     .sort((a, b) => (a[1].dibuat || 0) - (b[1].dibuat || 0))
-    .map(([id, q]) => ({ id, ...q, used: !!used[id] }));
+    .map(([id, q]) => ({ id, ...q }))
+    .filter((q) => { const k = normSoal(q.soal); if (seen.has(k)) return false; seen.add(k); return true; })
+    .map((q) => ({ ...q, used: !!used[q.id] || usedText.has(normSoal(q.soal)) }));
 }
 
 function renderPilihSoal() {
   const sesi = S().session || 1;
   const list = soalUntukSesi(sesi);
-  const sig = sesi + "|" + list.map((q) => q.id + (q.used ? "u" : "")).join(",");
+  const unused = list.filter((q) => !q.used);
+  const sig = sesi + "|" + unused.map((q) => q.id).join(",") + "|" + list.length;
   if (sig === soalSig) return;
   soalSig = sig;
-  const unused = list.filter((q) => !q.used), used = list.filter((q) => q.used);
   const cur = $("pilihSoal").value;
-  const opt = (q) => `<option value="${q.id}">${q.used ? "✓ " : ""}${esc((q.soal || "").slice(0, 90))}</option>`;
-  $("pilihSoal").innerHTML =
-    (list.length ? "" : `<option value="">— Belum ada soal untuk sesi ini —</option>`) +
-    (unused.length ? `<optgroup label="Belum dipakai (${unused.length})">${unused.map(opt).join("")}</optgroup>` : "") +
-    (used.length ? `<optgroup label="Sudah dipakai (${used.length})">${used.map(opt).join("")}</optgroup>` : "");
-  if (cur && list.some((q) => q.id === cur && !q.used)) $("pilihSoal").value = cur;
+  const dipakai = list.length - unused.length;
+  $("pilihSoal").innerHTML = unused.length
+    ? `<optgroup label="Sisa ${unused.length} soal · ${dipakai} sudah dipakai">${unused.map((q, i) => `<option value="${q.id}">${i + 1}. ${esc((q.soal || "").slice(0, 90))}</option>`).join("")}</optgroup>`
+    : `<option value="">${list.length ? `— Semua ${list.length} soal sesi ini sudah dipakai —` : "— Belum ada soal untuk sesi ini —"}</option>`;
+  if (cur && unused.some((q) => q.id === cur)) $("pilihSoal").value = cur;
   else if (unused[0]) $("pilihSoal").value = unused[0].id;
+  $("btnMulai").disabled = !unused.length;
 }
 
 function renderGiliran() {
@@ -188,6 +196,7 @@ $("pilihGiliran").onchange = () => { $("pilihGiliran").dataset.auto = "0"; };
 $("btnMulai").onclick = async () => {
   const qid = $("pilihSoal").value;
   if (!qid || !bank[qid]) { toast("Pilih soal terlebih dahulu"); return; }
+  if (soalUntukSesi(S().session || 1).find((q) => q.id === qid)?.used) { toast("Soal ini sudah pernah ditampilkan"); return; }
   if (isActive() && !confirm("Soal sebelumnya masih berjalan. Ganti dengan soal baru?")) return;
   const q = bank[qid];
   const sesi = S().session || 1;

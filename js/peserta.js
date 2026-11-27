@@ -92,7 +92,7 @@ function render() {
 
   let h = "";
   const soalBox = c ? `<div class="hp-soal"><div class="small muted">Soal no. ${c.number}</div>${esc(c.soal)}</div>` : "";
-  const opsi = (enabled) => `<div class="hp-opsi">${OPTIONS.map((o) => `
+  const opsi = (enabled, ringkas = false) => `<div class="hp-opsi${ringkas ? " ringkas" : ""}">${OPTIONS.map((o) => `
       <button data-o="${o}" ${enabled ? "" : "disabled"} class="${sudah === o ? "dipilih" : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></button>`).join("")}</div>`;
   const msg = (ico, text, sub = "") => `<div class="hp-msg"><span class="big">${ico}</span>${text}${sub ? `<div class="small muted" style="font-weight:500;margin-top:.4rem">${sub}</div>` : ""}</div>`;
   const nm = (id) => esc(room.teams[id]?.name || "");
@@ -110,13 +110,13 @@ function render() {
   } else if (s.phase === "open" && s.session === 2) {
     h = soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${sudah}`, "Menunggu kelompok lain...") : opsi(true));
   } else if (s.phase === "ready") {
-    h = soalBox + `<button class="buzz-btn" disabled>TUNGGU</button>` + opsi(false) +
+    h = soalBox + opsi(false, true) + `<button class="buzz-btn" disabled>TUNGGU</button>` +
       (s.locked?.[me] ? msg("🔒", "Kelompok Anda sudah menjawab salah") : `<div class="center muted">Buzzer segera dibuka...</div>`);
   } else if (s.phase === "buzz") {
     const lk = s.locked?.[me];
     const kalah = buzzResult[bkey] === "kalah";
-    h = soalBox + `<button class="buzz-btn" id="buzz" ${lk || kalah ? "disabled" : ""}>ANGKAT<br>TANGAN</button>` +
-      (lk ? msg("🔒", "Kelompok Anda sudah menjawab salah") : kalah ? `<div class="center muted">Kalah cepat...</div>` : "") + opsi(false);
+    h = soalBox + opsi(false, true) + `<button class="buzz-btn" id="buzz" ${lk || kalah ? "disabled" : ""}>ANGKAT<br>TANGAN</button>` +
+      (lk ? msg("🔒", "Kelompok Anda sudah menjawab salah") : kalah ? `<div class="center muted">Kalah cepat...</div>` : "");
   } else if (s.phase === "answering") {
     if (s.answeringTeam === me) h = msg("🙋", "Anda tercepat! Pilih jawaban:") + soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${sudah}`) : opsi(true));
     else h = msg("🙋", `${nm(s.answeringTeam)} sedang menjawab`) + soalBox + opsi(false);
