@@ -133,39 +133,64 @@ const ALIAS = {
 };
 function normKey(k) { return String(k).toLowerCase().replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
 
+function parseWorkbook(wb) {
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "", raw: false });
+  const ok = [], bad = [];
+  rows.forEach((r, i) => {
+    const m = {};
+    for (const [k, v] of Object.entries(r)) {
+      const nk = normKey(k);
+      for (const [field, al] of Object.entries(ALIAS)) if (al.includes(nk)) m[field] = String(v).trim();
+    }
+    const sesi = Number(m.sesi), kunci = (m.kunci || "").toUpperCase().replace(/[^ABCD]/g, "").slice(0, 1);
+    const errs = [];
+    if (![1, 2, 3].includes(sesi)) errs.push("sesi harus 1/2/3");
+    if (!m.soal) errs.push("soal kosong");
+    ["a", "b", "c", "d"].forEach((o) => { if (!m[o]) errs.push(`opsi ${o.toUpperCase()} kosong`); });
+    if (!kunci) errs.push("kunci harus A/B/C/D");
+    if (!m.soal && !m.a && !m.sesi) return; // baris kosong
+    if (errs.length) bad.push(`Baris ${i + 2}: ${errs.join(", ")}`);
+    else ok.push({ sesi, paket: m.paket || "", soal: m.soal, a: m.a, b: m.b, c: m.c, d: m.d, kunci });
+  });
+  return { ok, bad };
+}
+
+function showPreview({ ok, bad }) {
+  pendingImport = ok;
+  const pakets = [...new Set(ok.map((q) => q.paket).filter(Boolean))];
+  const ada = pakets.filter((p) => Object.values(bank).some((q) => q.paket === p));
+  $("impPreview").innerHTML =
+    `<div><b>${ok.length}</b> soal siap diimpor ` +
+    `(S1: ${ok.filter((q) => q.sesi === 1).length}, S2: ${ok.filter((q) => q.sesi === 2).length}, S3: ${ok.filter((q) => q.sesi === 3).length}).</div>` +
+    (ada.length ? `<div style="color:#7a5a00;margin-top:.4rem">⚠️ Paket <b>${ada.map(esc).join(", ")}</b> sudah ada di bank soal. Mengimpor lagi akan membuat soal ganda.</div>` : "") +
+    (bad.length ? `<div style="color:var(--merah);margin-top:.4rem"><b>${bad.length} baris dilewati:</b><br>${bad.slice(0, 15).map(esc).join("<br>")}${bad.length > 15 ? "<br>..." : ""}</div>` : "");
+  $("impGo").classList.toggle("hidden", !ok.length);
+}
+
 $("file").onchange = async (e) => {
   const f = e.target.files[0];
   pendingImport = []; $("impGo").classList.add("hidden"); $("impPreview").innerHTML = "";
   if (!f) return;
   try {
-    const buf = await f.arrayBuffer();
-    const wb = XLSX.read(buf, { type: "array" });
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "", raw: false });
-    const ok = [], bad = [];
-    rows.forEach((r, i) => {
-      const m = {};
-      for (const [k, v] of Object.entries(r)) {
-        const nk = normKey(k);
-        for (const [field, al] of Object.entries(ALIAS)) if (al.includes(nk)) m[field] = String(v).trim();
-      }
-      const sesi = Number(m.sesi), kunci = (m.kunci || "").toUpperCase().replace(/[^ABCD]/g, "").slice(0, 1);
-      const errs = [];
-      if (![1, 2, 3].includes(sesi)) errs.push("sesi harus 1/2/3");
-      if (!m.soal) errs.push("soal kosong");
-      ["a", "b", "c", "d"].forEach((o) => { if (!m[o]) errs.push(`opsi ${o.toUpperCase()} kosong`); });
-      if (!kunci) errs.push("kunci harus A/B/C/D");
-      if (!m.soal && !m.a && !m.sesi) return; // baris kosong
-      if (errs.length) bad.push(`Baris ${i + 2}: ${errs.join(", ")}`);
-      else ok.push({ sesi, paket: m.paket || "", soal: m.soal, a: m.a, b: m.b, c: m.c, d: m.d, kunci });
-    });
-    pendingImport = ok;
-    $("impPreview").innerHTML =
-      `<div><b>${ok.length}</b> soal siap diimpor ` +
-      `(S1: ${ok.filter((q) => q.sesi === 1).length}, S2: ${ok.filter((q) => q.sesi === 2).length}, S3: ${ok.filter((q) => q.sesi === 3).length}).</div>` +
-      (bad.length ? `<div style="color:var(--merah);margin-top:.4rem"><b>${bad.length} baris dilewati:</b><br>${bad.slice(0, 15).map(esc).join("<br>")}${bad.length > 15 ? "<br>..." : ""}</div>` : "");
-    if (ok.length) $("impGo").classList.remove("hidden");
+    showPreview(parseWorkbook(XLSX.read(await f.arrayBuffer(), { type: "array" })));
   } catch (ex) {
     $("impPreview").innerHTML = `<span style="color:var(--merah)">File tidak bisa dibaca: ${esc(ex.message)}</span>`;
+  }
+};
+
+// ---------- Paket soal bawaan (folder soal/ di GitHub) ----------
+fetch("soal/daftar.json").then((r) => r.json()).then((list) => {
+  $("bawaan").innerHTML += list.map((x) => `<option value="${esc(x.file)}">${esc(x.nama)}</option>`).join("");
+}).catch(() => {});
+$("muatBawaan").onclick = async () => {
+  const f = $("bawaan").value;
+  if (!f) { toast("Pilih paket bawaan dulu"); return; }
+  try {
+    const text = await (await fetch("soal/" + f, { cache: "no-store" })).text();
+    showPreview(parseWorkbook(XLSX.read(text.replace(/^\ufeff/, ""), { type: "string" })));
+    $("impPreview").scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (ex) {
+    $("impPreview").innerHTML = `<span style="color:var(--merah)">Paket tidak bisa dimuat: ${esc(ex.message)}</span>`;
   }
 };
 
