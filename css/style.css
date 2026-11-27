@@ -247,3 +247,14 @@ body.layar { background: radial-gradient(circle at 20% 10%, #127a4f, var(--hijau
 .jeda-banner { background: var(--emas); color: #2b1d00; font-weight: 800; text-align: center; padding: .7rem; border-radius: 12px; margin-bottom: .8rem; }
 .dijeda .hp-opsi, .dijeda .buzz-btn, .dijeda form { pointer-events: none; opacity: .45; }
 .timer-ring.jeda circle:last-child { stroke: #9fb3a8; }
+
+/* peringatan keluar halaman */
+.modal { position: fixed; inset: 0; background: rgba(20,0,0,.7); display: grid; place-items: center; z-index: 80; padding: 1rem; }
+.peringatan-op { background: var(--merah); color: #fff; border-radius: 12px; padding: .8rem 1rem; font-weight: 700; margin-bottom: 1rem; animation: kedip 1s ease-in-out infinite; }
+@keyframes kedip { 50% { opacity: .75; } }
+.badge-st { white-space: nowrap; display: inline-block; font-size: .72rem; font-weight: 800; padding: .1rem .45rem; border-radius: 999px; margin-left: .3rem; vertical-align: middle; }
+.badge-st.siap { background: var(--hijau-muda); color: var(--hijau-tua); }
+.badge-st.belum { background: #eef1ef; color: var(--abu); }
+.badge-st.pergi { background: var(--merah); color: #fff; animation: kedip 1s infinite; }
+.badge-st.catat { background: #fde2e4; color: var(--merah); }
+.badge-st.putus { background: #333; color: #fff; }

@@ -17,7 +17,7 @@
         "teams": {
           "$team": {
             "uid": {
-              ".write": "auth != null && !data.exists() && newData.val() === auth.uid"
+              ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists() && !root.child('rooms/' + $code + '/status/' + $team + '/ready').exists()))"
             }
           },
           ".read": "auth != null"
@@ -54,6 +54,13 @@
         },
         "reveal": {
           ".read": "auth != null"
+        },
+        "status": {
+          ".read": "auth != null",
+          "$team": {
+            ".write": "auth != null && root.child('rooms/' + $code + '/teams/' + $team + '/uid').val() === auth.uid",
+            ".validate": "newData.hasChild('ready')"
+          }
         }
       }
     }

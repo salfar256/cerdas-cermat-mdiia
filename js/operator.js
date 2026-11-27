@@ -2,8 +2,8 @@ import {
   auth, db, ref, onValue, get, set, update, remove, push, serverTimestamp, increment, signOut,
   serverNow, SESI_NAMA, SESI_PENDEK, TEAM_COLORS, TEAM_IDS, OPTIONS, DEFAULT_SETTINGS,
   settingsOf, esc, teamList, secondsLeft, preloadSounds, unlockSounds, playSound, fmtScore
-} from "./common.js?v=20261127232326";
-import { requireAdmin, toast } from "./admin-auth.js?v=20261127232326";
+} from "./common.js?v=20261127233937";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261127233937";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};
@@ -285,7 +285,7 @@ $("btnJuara").onclick = () => update(R(), { "state/phase": "final", "state/msg":
 $("btnResetSkor").onclick = async () => {
   if (!confirm("Reset lomba? Semua skor jadi 0, tanda soal terpakai dihapus, dan catatan dikosongkan.")) return;
   const upd = { used: null, answers: null, buzz: null, log: null, current: null, reveal: null, "meta/count": null, "meta/s1count": null, judge: null, state: { session: 1, phase: "idle", msg: "" } };
-  teamList(room).forEach((t) => upd[`teams/${t.id}/score`] = 0);
+  teamList(room).forEach((t) => { upd[`teams/${t.id}/score`] = 0; if (room.status?.[t.id]) upd[`status/${t.id}/pelanggaran`] = 0; });
   await update(R(), upd);
 };
 
@@ -303,8 +303,9 @@ $("tim").onclick = async (e) => {
     if (nm && nm.trim()) await update(R(), { [`teams/${d.rename}/name`]: nm.trim() });
   }
   if (d.lepas && confirm(`Lepas HP ${room.teams[d.lepas].name}? Kelompok harus masuk ulang dari HP.`)) {
-    await update(R(), { [`teams/${d.lepas}/uid`]: null });
+    await update(R(), { [`teams/${d.lepas}/uid`]: null, [`status/${d.lepas}`]: null });
   }
+  if (d.nolpel) await update(R(), { [`status/${d.nolpel}/pelanggaran`]: 0 });
 };
 
 // =================================================================
@@ -497,6 +498,7 @@ function render() {
   renderStatus();
   renderPreview();
   renderTeams();
+  cekPeringatan();
   renderLog();
   $("btnTutup").disabled = !["open", "buzz", "answering"].includes(s.phase);
   const bisaJeda = ["open", "ready", "buzz", "answering"].includes(s.phase);
@@ -609,8 +611,8 @@ function renderTeams() {
   $("tim").innerHTML = teamList(room).map((t) => `
     <div class="team-row">
       <span class="team-dot" style="background:${t.color}"></span>
-      <div class="nama"><a href="javascript:void 0" data-rename="${t.id}">${esc(t.name)}</a>
-        <div class="small muted">${t.uid ? "📱 HP terhubung" : "HP belum masuk"}${t.uid ? ` · <a href="javascript:void 0" data-lepas="${t.id}">Lepas HP</a>` : ""}</div></div>
+      <div class="nama"><a href="javascript:void 0" data-rename="${t.id}">${esc(t.name)}</a>${badgeStatus(t)}
+        <div class="small muted">${t.uid ? "📱 HP terhubung" : "HP belum masuk"}${t.uid ? ` · <a href="javascript:void 0" data-lepas="${t.id}">Lepas HP</a>` : ""}${room.status?.[t.id]?.pelanggaran ? ` · <a href="javascript:void 0" data-nolpel="${t.id}">Nolkan pelanggaran</a>` : ""}</div></div>
       <div class="row" style="gap:.25rem">
         <button class="btn abu kecil" data-adj="${t.id}|-50">−50</button>
         <button class="btn abu kecil" data-adj="${t.id}|-10">−10</button>
@@ -619,6 +621,39 @@ function renderTeams() {
       </div>
       <div class="skor">${fmtScore(t.score)}</div>
     </div>`).join("");
+}
+
+// ---------- Status siap & peringatan keluar halaman ----------
+function badgeStatus(t) {
+  const st = room.status?.[t.id];
+  if (!t.uid) return "";
+  if (!st?.ready) return `<span class="badge-st belum">belum siap</span>`;
+  let b = st.away ? `<span class="badge-st pergi">🚨 KELUAR HALAMAN</span>`
+    : st.online === false ? `<span class="badge-st putus">📴 terputus</span>`
+    : `<span class="badge-st siap">✅ siap</span>`;
+  if (st.pelanggaran) b += `<span class="badge-st catat">⚠️ ${st.pelanggaran}× keluar</span>`;
+  return b;
+}
+
+let prevAway = null;
+function cekPeringatan() {
+  const teams = teamList(room);
+  const pergi = teams.filter((t) => t.uid && room.status?.[t.id]?.away);
+  $("peringatan").innerHTML = pergi.length
+    ? `<div class="peringatan-op">🚨 ${pergi.map((t) => esc(t.name)).join(", ")} sedang meninggalkan halaman lomba (pindah tab / aplikasi lain)!</div>` : "";
+  const now = new Set(pergi.map((t) => t.id));
+  if (prevAway === null) { prevAway = now; return; }        // muat pertama: jangan bunyikan peringatan lama
+  const baru = [...now].filter((id) => !prevAway.has(id));
+  prevAway = now;
+  if (!baru.length) return;
+  const upd = {};
+  baru.forEach((id) => {
+    const t = room.teams[id], n = room.status[id].pelanggaran || 1;
+    toast(`🚨 ${t.name} meninggalkan halaman lomba (${n}×)`, 5000);
+    logEntry(upd, `🚨 ${t.name} keluar halaman lomba (pelanggaran ke-${n})`);
+  });
+  if ($("suaraOp").checked) playSound("salah");
+  update(R(), upd);
 }
 
 function renderLog() {

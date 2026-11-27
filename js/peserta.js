@@ -1,7 +1,7 @@
 import {
-  db, ref, onValue, set, serverTimestamp, ensureAnon, watchPublicRoom,
+  db, ref, onValue, set, update, serverTimestamp, increment, onDisconnect, ensureAnon, watchPublicRoom,
   SESI_NAMA, OPTIONS, isPaused, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
-} from "./common.js?v=20261127232326";
+} from "./common.js?v=20261127233937";
 
 const $ = (id) => document.getElementById(id);
 let code = null, uid = null, room = null, me = null, unwatch = null;
@@ -10,7 +10,7 @@ let ansSub = null, ansQid = null;
 let buzzResult = {};       // `${qid}|${buzzKey}` -> 'menang' | 'kalah'
 let renderSig = "";
 
-const show = (v) => ["vMasuk", "vTim", "vMain"].forEach((id) => $(id).classList.toggle("hidden", id !== v));
+const show = (v) => ["vMasuk", "vTim", "vSiap", "vMain"].forEach((id) => $(id).classList.toggle("hidden", id !== v));
 
 $("kode").value = getParam("r") || localStorage.getItem("cc_kode") || "";
 $("formKode").onsubmit = (e) => { e.preventDefault(); join($("kode").value.trim()); };
@@ -39,6 +39,9 @@ async function join(c) {
       if (me) localStorage.setItem("cc_tim_" + c, me);
     }
     if (!me) { renderPick(); show("vTim"); return; }
+    if (!room.status?.[me]?.ready) { renderSiap(); show("vSiap"); return; }
+    mulaiPantau();
+    if (!$("modalPergi").classList.contains("hidden")) $("jmlPergi").textContent = room.status[me].pelanggaran || 1;
     show("vMain");
     subAnswer();
     render();
@@ -60,6 +63,63 @@ $("timPick").onclick = async (e) => {
     alert("Kelompok ini sudah dipakai HP lain. Minta operator menekan 'Lepas HP' jika perlu.");
   }
 };
+
+// ---------- Tombol SIAP & pemantauan keluar halaman ----------
+function renderSiap() {
+  const t = room.teams[me];
+  $("siapNama").textContent = t.name;
+  $("siapHead").style.background = t.color;
+}
+$("btnSiap").onclick = async () => {
+  $("btnSiap").disabled = true;
+  try {
+    await update(ref(db, `rooms/${code}/status/${me}`), { ready: true, readyAt: serverTimestamp(), away: false, online: true });
+  } catch (ex) { alert("Gagal: " + (ex.code || ex.message)); }
+  $("btnSiap").disabled = false;
+};
+$("gantiTim").onclick = async () => {
+  // lepaskan kelompok ini agar bisa memilih kelompok lain (hanya sebelum siap)
+  try { await set(ref(db, `rooms/${code}/teams/${me}/uid`), null); } catch (ex) {
+    alert("Minta operator menekan 'Lepas HP' untuk kelompok ini.");
+  }
+  localStorage.removeItem("cc_tim_" + code); me = null;
+};
+
+let pantauAktif = false, pergiSekarang = false, blurTimer = null, putusSub = null;
+function mulaiPantau() {
+  if (pantauAktif) return;
+  pantauAktif = true;
+  document.addEventListener("visibilitychange", () => { if (document.hidden) pergi(); else kembali(); });
+  window.addEventListener("pagehide", pergi);
+  // laptop: pindah ke jendela/aplikasi lain tanpa menyembunyikan tab
+  window.addEventListener("blur", () => {
+    clearTimeout(blurTimer);
+    blurTimer = setTimeout(() => { if (!document.hasFocus()) pergi(); }, 1500);
+  });
+  window.addEventListener("focus", () => { clearTimeout(blurTimer); if (!document.hidden) kembali(); });
+  // tanda terhubung / terputus
+  putusSub = onValue(ref(db, ".info/connected"), (s) => {
+    if (s.val() !== true || !me) return;
+    const r = ref(db, `rooms/${code}/status/${me}`);
+    onDisconnect(r).update({ online: false });
+    update(r, { online: true, ready: true }).catch(() => {});
+  });
+}
+function statusRef() { return ref(db, `rooms/${code}/status/${me}`); }
+function pergi() {
+  if (pergiSekarang || !me || !room?.status?.[me]?.ready) return;
+  pergiSekarang = true;
+  update(statusRef(), { ready: true, away: true, awayAt: serverTimestamp(), pelanggaran: increment(1) }).catch(() => {});
+}
+function kembali() {
+  if (!pergiSekarang) return;
+  pergiSekarang = false;
+  update(statusRef(), { ready: true, away: false, backAt: serverTimestamp() }).catch(() => {});
+  $("jmlPergi").textContent = room?.status?.[me]?.pelanggaran || 1;
+  $("modalPergi").classList.remove("hidden");
+  navigator.vibrate?.([200, 100, 200]);
+}
+$("tutupPergi").onclick = () => $("modalPergi").classList.add("hidden");
 
 function subAnswer() {
   const qid = room.state?.qid;

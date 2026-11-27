@@ -8,7 +8,7 @@
   <title>Peserta · Cerdas Cermat MDIIA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261127232326">
+  <link rel="stylesheet" href="css/style.css?v=20261127233937">
 </head>
 <body>
   <div class="hp">
@@ -30,6 +30,29 @@
       <button class="btn abu" id="gantiKode" style="margin-top:1.2rem">Ganti kode ruang</button>
     </div>
 
+    <!-- Siap -->
+    <div id="vSiap" class="hp-body hidden">
+      <div class="card stack center">
+        <div class="hp-head" id="siapHead" style="justify-content:center"><div class="nm" id="siapNama"></div></div>
+        <div style="font-size:3rem">✋</div>
+        <h2 style="margin:0">Sudah siap?</h2>
+        <p class="muted" style="margin:0">Setelah menekan <b>SAYA SIAP</b>, jangan berpindah tab, membuka aplikasi lain, atau mengunci layar. Jika itu terjadi, <b>juri akan menerima peringatan</b> dan tercatat sebagai pelanggaran.</p>
+        <button class="btn besar" id="btnSiap" style="width:100%">✅ SAYA SIAP</button>
+        <button class="btn abu kecil" id="gantiTim">Bukan kelompok saya</button>
+      </div>
+    </div>
+
+    <!-- Peringatan keluar halaman -->
+    <div id="modalPergi" class="modal hidden">
+      <div class="card stack center" style="max-width:420px">
+        <div style="font-size:3rem">⚠️</div>
+        <h2 style="margin:0;color:var(--merah)">Anda meninggalkan halaman lomba!</h2>
+        <p style="margin:0">Tercatat <b id="jmlPergi">1</b> kali. Juri sudah menerima pemberitahuan.</p>
+        <p class="small muted" style="margin:0">Tetap di halaman ini sampai lomba selesai.</p>
+        <button class="btn merah besar" id="tutupPergi" style="width:100%">Saya mengerti</button>
+      </div>
+    </div>
+
     <!-- Main -->
     <div id="vMain" class="hidden" style="display:flex;flex-direction:column;flex:1">
       <div class="hp-head" id="head"><div><div class="nm" id="hNama"></div><div class="small" id="hSesi"></div></div><div class="sk" id="hSkor"></div></div>
@@ -38,6 +61,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/peserta.js?v=20261127232326"></script>
+  <script type="module" src="js/peserta.js?v=20261127233937"></script>
 </body>
 </html>

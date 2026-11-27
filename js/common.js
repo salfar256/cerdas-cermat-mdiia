@@ -1,12 +1,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getDatabase, ref, onValue, get, set, update, remove, push,
-  serverTimestamp, increment
+  serverTimestamp, increment, onDisconnect
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import {
   getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261127232326";
+import { firebaseConfig } from "./firebase-config.js?v=20261127233937";
 
 export const CONFIG_OK = !String(firebaseConfig.apiKey || "").startsWith("ISI");
 if (!CONFIG_OK) {
@@ -22,7 +22,7 @@ export const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 export const auth = getAuth(app);
 export {
-  ref, onValue, get, set, update, remove, push, serverTimestamp, increment,
+  ref, onValue, get, set, update, remove, push, serverTimestamp, increment, onDisconnect,
   signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged
 };
 
@@ -121,7 +121,7 @@ export function playSound(kind) {
 // Peserta & layar hanya boleh membaca bagian publik ruang lomba.
 export function watchPublicRoom(code, cb) {
   const room = {};
-  const parts = ["meta", "settings", "teams", "state", "current", "reveal"];
+  const parts = ["meta", "settings", "teams", "state", "current", "reveal", "status"];
   const loaded = new Set();
   const unsubs = parts.map((p) => onValue(ref(db, `rooms/${code}/${p}`), (s) => {
     room[p] = s.val();

@@ -29,6 +29,8 @@ Alamat setelah aktif: **https://salfar256.github.io/cerdas-cermat-mdiia/**
 
 Satu paket boleh mencampur ketiganya.
 
+**Tombol SIAP & pengawasan:** setelah memilih kelompok, peserta menekan SAYA SIAP. Sejak itu, jika HP/laptop peserta berpindah tab, membuka aplikasi lain, atau mengunci layar, operator langsung mendapat peringatan (banner merah, status kelompok, catatan) dan peserta melihat peringatan saat kembali. Jumlah pelanggaran tercatat per kelompok.
+
 **Jeda waktu:** tombol ⏸ di operator membekukan timer di semua layar dan HP; tekan ▶ untuk melanjutkan dari sisa waktu yang sama.
 
 Urutan tercepat memakai **jam server Firebase**, bukan jam HP, sehingga adil walau jam HP berbeda.

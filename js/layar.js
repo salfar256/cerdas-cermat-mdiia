@@ -1,7 +1,7 @@
 import {
   ensureAnon, watchPublicRoom, SESI_NAMA, OPTIONS, esc, teamList, sortedTeams, secondsLeft,
   isPaused, getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
-} from "./common.js?v=20261127232326";
+} from "./common.js?v=20261127233937";
 
 const $ = (id) => document.getElementById(id);
 let room = null, lastSfx = undefined, renderSig = "", unwatch = null;
