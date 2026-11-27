@@ -31,7 +31,7 @@ $("formKode").onsubmit = async (e) => {
 };
 
 const ATURAN = {
-  1: ["Setiap kelompok mendapat soal secara bergiliran.", "Jawab benar mendapat poin. Jawaban salah: soal hangus."],
+  1: ["Kelompok menjawab jatah soalnya secara berurutan, mulai dari kelompok pertama.", "Jawab benar mendapat poin. Jawaban salah: soal hangus."],
   2: ["Semua kelompok menjawab soal yang sama.", "Makin cepat dan benar, makin besar poinnya. Salah = 0."],
   3: ["Tekan tombol ANGKAT TANGAN paling cepat untuk menjawab.", "Benar menambah poin, salah mengurangi poin dan soal dibuka lagi untuk kelompok lain."]
 };
@@ -91,7 +91,7 @@ function renderMain(s, c, st) {
     const rows = teamList(room).map((t) => ({ t, r: rev.results?.[t.id] || {} }))
       .sort((a, b) => (a.r.rank ?? 99) - (b.r.rank ?? 99) || (a.r.ms ?? 1e9) - (b.r.ms ?? 1e9));
     hasil = `<div class="hasil-tabel"><table><thead><tr><th>Kelompok</th><th>Jawaban</th><th>Waktu</th><th>Poin</th></tr></thead><tbody>
-      ${rows.map(({ t, r }) => `<tr><td>${esc(t.name)}</td><td>${r.choice ? r.choice + (r.correct ? " ✔" : " ✘") : "—"}</td>
+      ${rows.map(({ t, r }) => `<tr><td>${esc(t.name)}</td><td>${r.choice ? esc(r.choice) + (r.correct ? " ✔" : " ✘") : "—"}</td>
         <td>${r.ms != null ? (r.ms / 1000).toFixed(2) + " dtk" : "—"}</td><td>${r.points ? "+" + r.points : "0"}</td></tr>`).join("")}</tbody></table></div>`;
   }
 
@@ -103,7 +103,9 @@ function renderMain(s, c, st) {
         <div class="angka" id="ringNum"></div></div></div>
     ${banner}
     <div class="layar-soal" style="${banner ? "margin-top:2vh" : ""}"><span class="nomor">Soal no. ${c.number}</span>${esc(c.soal)}</div>
-    <div class="layar-opsi">${OPTIONS.map((o) => `<div class="${key ? (o === key ? "benar" : "redup") : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></div>`).join("")}</div>
+    ${c.tipe === "isian"
+      ? (key ? `<div class="layar-kunci">✔ Jawaban: ${esc(key)}</div>` : s.phase === "judging" ? `<div class="layar-tunggu">⚖️ Juri sedang menilai...</div>` : `<div class="layar-tunggu">✍️ Soal isian singkat</div>`)
+      : `<div class="layar-opsi">${OPTIONS.map((o) => `<div class="${key ? (o === key ? "benar" : "redup") : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></div>`).join("")}</div>`}
     ${hasil}`;
 }
 
@@ -112,7 +114,7 @@ function renderScore(s) {
   const res = s.phase === "reveal" ? room.reveal?.results || {} : {};
   $("skor").style.gridTemplateColumns = `repeat(${teams.length}, 1fr)`;
   $("skor").innerHTML = teams.map((t) => {
-    const sorot = (s.phase === "open" && s.session === 1 && s.turnTeam === t.id) || (s.phase === "answering" && s.answeringTeam === t.id);
+    const sorot = (["open", "judging"].includes(s.phase) && s.session === 1 && s.turnTeam === t.id) || (["answering", "judging"].includes(s.phase) && s.session === 3 && s.answeringTeam === t.id);
     const redup = ["ready", "buzz", "answering"].includes(s.phase) && s.locked?.[t.id];
     const r = res[t.id];
     const delta = r && r.points ? `<span class="delta">${r.points > 0 ? "+" : ""}${r.points}</span>` : "";

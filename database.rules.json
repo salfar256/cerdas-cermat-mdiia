@@ -26,7 +26,7 @@
           "$qid": {
             "$team": {
               ".write": "auth != null && !data.exists() && root.child('rooms/' + $code + '/teams/' + $team + '/uid').val() === auth.uid && root.child('rooms/' + $code + '/state/qid').val() === $qid && now <= root.child('rooms/' + $code + '/state/endsAt').val() + 1500 && ((root.child('rooms/' + $code + '/state/session').val() === 1 && root.child('rooms/' + $code + '/state/phase').val() === 'open' && root.child('rooms/' + $code + '/state/turnTeam').val() === $team) || (root.child('rooms/' + $code + '/state/session').val() === 2 && root.child('rooms/' + $code + '/state/phase').val() === 'open') || (root.child('rooms/' + $code + '/state/session').val() === 3 && root.child('rooms/' + $code + '/state/phase').val() === 'answering' && root.child('rooms/' + $code + '/state/answeringTeam').val() === $team))",
-              ".validate": "newData.hasChildren(['choice', 'ts']) && newData.child('choice').isString() && newData.child('choice').val().matches(/^[ABCD]$/) && newData.child('ts').val() === now",
+              ".validate": "newData.hasChild('ts') && newData.child('ts').val() === now && ((newData.child('choice').isString() && newData.child('choice').val().matches(/^[ABCD]$/) && !newData.hasChild('text')) || (newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 200 && !newData.hasChild('choice')))",
               ".read": "auth != null && root.child('rooms/' + $code + '/teams/' + $team + '/uid').val() === auth.uid"
             }
           }

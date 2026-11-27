@@ -1,6 +1,10 @@
 [
  {
   "file": "ke-nu-an.csv",
-  "nama": "Ke-NU-an (30 soal: S1 20, S2 5, S3 5)"
+  "nama": "Ke-NU-an · Pilihan ganda (30 soal: S1 20, S2 5, S3 5)"
+ },
+ {
+  "file": "ke-nu-an-isian.csv",
+  "nama": "Ke-NU-an · Isian singkat (30 soal: S1 20, S2 5, S3 5)"
  }
 ]

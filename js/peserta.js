@@ -68,7 +68,7 @@ function subAnswer() {
   ansQid = qid; ansSub = null;
   if (!qid) return;
   ansSub = onValue(ref(db, `rooms/${code}/answers/${qid}/${me}`), (s) => {
-    if (s.exists()) { myAns[qid] = s.val().choice; render(); }
+    if (s.exists()) { const v = s.val(); myAns[qid] = v.choice ?? v.text; render(); }
   }, () => {});
 }
 
@@ -92,8 +92,13 @@ function render() {
 
   let h = "";
   const soalBox = c ? `<div class="hp-soal"><div class="small muted">Soal no. ${c.number}</div>${esc(c.soal)}</div>` : "";
-  const opsi = (enabled, ringkas = false) => `<div class="hp-opsi${ringkas ? " ringkas" : ""}">${OPTIONS.map((o) => `
+  const isian = c?.tipe === "isian";
+  const opsiPG = (enabled, ringkas = false) => `<div class="hp-opsi${ringkas ? " ringkas" : ""}">${OPTIONS.map((o) => `
       <button data-o="${o}" ${enabled ? "" : "disabled"} class="${sudah === o ? "dipilih" : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></button>`).join("")}</div>`;
+  // Soal isian: kolom ketik; pilihan ganda: tombol A-D
+  const opsi = (enabled, ringkas = false) => isian
+    ? (enabled ? `<form class="hp-isian" id="fIsian"><input id="isianTxt" maxlength="200" autocomplete="off" placeholder="Ketik jawaban..."><button class="btn besar">Kirim jawaban</button></form>` : "")
+    : opsiPG(enabled, ringkas);
   const msg = (ico, text, sub = "") => `<div class="hp-msg"><span class="big">${ico}</span>${text}${sub ? `<div class="small muted" style="font-weight:500;margin-top:.4rem">${sub}</div>` : ""}</div>`;
   const nm = (id) => esc(room.teams[id]?.name || "");
 
@@ -105,10 +110,10 @@ function render() {
   } else if (!c) {
     h = msg("⏳", "Menunggu soal...");
   } else if (s.phase === "open" && s.session === 1) {
-    if (s.turnTeam === me) h = sudah ? soalBox + msg("📨", `Jawaban terkirim: ${sudah}`, "Menunggu hasil...") : soalBox + opsi(true);
+    if (s.turnTeam === me) h = sudah ? soalBox + msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Menunggu hasil...") : soalBox + opsi(true);
     else h = msg("👀", `Giliran ${nm(s.turnTeam)}`, "Pilihan jawaban hanya bisa dipilih kelompok yang mendapat giliran") + soalBox + opsi(false);
   } else if (s.phase === "open" && s.session === 2) {
-    h = soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${sudah}`, "Menunggu kelompok lain...") : opsi(true));
+    h = soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Menunggu kelompok lain...") : opsi(true));
   } else if (s.phase === "ready") {
     h = soalBox + opsi(false, true) + `<button class="buzz-btn" disabled>TUNGGU</button>` +
       (s.locked?.[me] ? msg("🔒", "Kelompok Anda sudah menjawab salah") : `<div class="center muted">Buzzer segera dibuka...</div>`);
@@ -118,22 +123,42 @@ function render() {
     h = soalBox + opsi(false, true) + `<button class="buzz-btn" id="buzz" ${lk || kalah ? "disabled" : ""}>ANGKAT<br>TANGAN</button>` +
       (lk ? msg("🔒", "Kelompok Anda sudah menjawab salah") : kalah ? `<div class="center muted">Kalah cepat...</div>` : "");
   } else if (s.phase === "answering") {
-    if (s.answeringTeam === me) h = msg("🙋", "Anda tercepat! Pilih jawaban:") + soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${sudah}`) : opsi(true));
+    if (s.answeringTeam === me) h = msg("🙋", isian ? "Anda tercepat! Jawab:" : "Anda tercepat! Pilih jawaban:", isian ? "Ketik jawaban, atau jawab lisan kepada juri" : "") + soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${esc(sudah)}`) : opsi(true));
     else h = msg("🙋", `${nm(s.answeringTeam)} sedang menjawab`) + soalBox + opsi(false);
+  } else if (s.phase === "judging") {
+    h = soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Juri sedang menilai...") : msg("⚖️", "Juri sedang menilai..."));
   } else if (s.phase === "reveal") {
     const r = room.reveal?.results?.[me];
     const key = room.reveal?.key;
     let hasil;
     if (r && r.choice) hasil = r.correct
       ? msg("✅", `Benar! +${r.points}`, r.rank ? `Urutan benar ke-${r.rank}` : "")
-      : msg("❌", r.points < 0 ? `Salah (${r.points})` : "Salah", `Jawaban Anda ${r.choice}`);
+      : msg("❌", r.points < 0 ? `Salah (${r.points})` : "Salah", `Jawaban Anda: ${esc(r.choice)}`);
     else if (s.session === 1 && s.turnTeam !== me) hasil = msg("📋", `Jawaban benar: ${key}`, esc(s.msg || ""));
     else hasil = msg("⌛", "Tidak menjawab", s.session === 3 ? "" : "Waktu habis");
-    h = hasil + `<div class="center"><span class="pill">Kunci: ${key} · ${esc(c[String(key).toLowerCase()] || "")}</span></div>`;
+    h = hasil + `<div class="center"><span class="pill">Kunci: ${isian ? esc(key) : `${key} · ${esc(c[String(key).toLowerCase()] || "")}`}</span></div>`;
   }
+  const ketik = $("isianTxt")?.value || "";
   $("body").innerHTML = h;
+  if ($("isianTxt")) { $("isianTxt").value = ketik; }
   tick();
 }
+
+$("body").addEventListener("submit", async (e) => {
+  if (e.target.id !== "fIsian") return;
+  e.preventDefault();
+  const text = $("isianTxt").value.trim().slice(0, 200);
+  if (!text) { $("isianTxt").focus(); return; }
+  const qid = room.state?.qid;
+  e.target.querySelectorAll("input,button").forEach((x) => x.disabled = true);
+  try {
+    await set(ref(db, `rooms/${code}/answers/${qid}/${me}`), { text, ts: serverTimestamp() });
+    myAns[qid] = text; navigator.vibrate?.(60);
+  } catch (ex) {
+    alert("Jawaban tidak diterima (waktu habis atau bukan giliran).");
+  }
+  renderSig = ""; render();
+});
 
 $("body").addEventListener("click", async (e) => {
   const btn = e.target.closest("button");

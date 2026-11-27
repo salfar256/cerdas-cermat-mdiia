@@ -230,3 +230,15 @@ body.layar { background: radial-gradient(circle at 20% 10%, #127a4f, var(--hijau
 .hp-opsi.ringkas { grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .8rem; }
 .hp-opsi.ringkas button { padding: .55rem .6rem; font-size: .92rem; gap: .5rem; border-radius: 12px; }
 .hp-opsi.ringkas button b { width: 26px; height: 26px; border-radius: 7px; font-size: .85rem; }
+
+/* operator: kunci & panel juri */
+.kunci-box { margin-top: .7rem; background: var(--hijau-muda); border: 1px solid #b9dcc7; color: var(--hijau-tua); border-radius: 10px; padding: .55rem .8rem; }
+.juri-box { border: 2px solid var(--emas); background: var(--emas-muda); border-radius: 12px; padding: .8rem; }
+.juri-jawab { font-size: 1.35rem; font-weight: 800; margin: .35rem 0 .7rem; word-break: break-word; }
+/* peserta: isian */
+.hp-isian { display: grid; gap: .6rem; margin-top: 1rem; }
+.hp-isian input { font-size: 1.2rem; padding: .9rem; border-radius: 14px; border: 2px solid var(--garis); }
+.hp-isian input:focus { border-color: var(--hijau); }
+/* layar: kunci isian */
+.layar-kunci { margin-top: 3vh; background: #1fae63; border: .3vw solid #b8ffd5; border-radius: 1.4vw; padding: 2vh 2vw; font-size: min(2.4vw, 4.2vh); font-weight: 800; text-align: center; }
+.layar-tunggu { margin-top: 3vh; text-align: center; font-size: min(2vw, 3.6vh); opacity: .85; }

@@ -16,9 +16,10 @@ function items() {
 }
 
 function filtered() {
-  const s = $("fSesi").value, p = $("fPaket").value, c = $("fCari").value.trim().toLowerCase();
+  const s = $("fSesi").value, p = $("fPaket").value, c = $("fCari").value.trim().toLowerCase(), tp = $("fTipe").value;
   return items().filter((q) =>
     (!s || String(q.sesi) === s) &&
+    (!tp || (q.tipe || "pg") === tp) &&
     (!p || (q.paket || "") === p) &&
     (!c || (q.soal || "").toLowerCase().includes(c)));
 }
@@ -39,7 +40,7 @@ function renderList() {
     <tr>
       <td>${i + 1}</td>
       <td><span class="pill ${q.sesi == 3 ? "merah" : q.sesi == 2 ? "emas" : ""}">S${q.sesi}</span>${q.paket ? `<div class="small muted">${esc(q.paket)}</div>` : ""}</td>
-      <td>${esc(q.soal)}<div class="small muted">A. ${esc(q.a)} · B. ${esc(q.b)} · C. ${esc(q.c)} · D. ${esc(q.d)}</div></td>
+      <td>${q.tipe === "isian" ? `<span class="pill emas">Isian</span> ` : ""}${esc(q.soal)}${q.tipe === "isian" ? "" : `<div class="small muted">A. ${esc(q.a)} · B. ${esc(q.b)} · C. ${esc(q.c)} · D. ${esc(q.d)}</div>`}</td>
       <td><b>${esc(q.kunci)}</b></td>
       <td style="white-space:nowrap">
         <button class="btn abu kecil" data-edit="${q.id}">Ubah</button>
@@ -48,7 +49,7 @@ function renderList() {
     </tr>`).join("") || `<tr><td colspan="5" class="muted center">Belum ada soal.</td></tr>`;
 }
 
-["fSesi", "fPaket"].forEach((id) => $(id).onchange = renderList);
+["fSesi", "fPaket", "fTipe"].forEach((id) => $(id).onchange = renderList);
 $("fCari").oninput = renderList;
 
 $("tbody").onclick = async (e) => {
@@ -56,25 +57,40 @@ $("tbody").onclick = async (e) => {
   if (ed) {
     const q = bank[ed];
     $("qId").value = ed; $("qSesi").value = q.sesi; $("qPaket").value = q.paket || "";
-    $("qSoal").value = q.soal; $("qA").value = q.a; $("qB").value = q.b; $("qC").value = q.c; $("qD").value = q.d;
-    $("qKunci").value = q.kunci; $("formJudul").textContent = "Ubah Soal";
+    $("qTipe").value = q.tipe || "pg"; setTipe();
+    $("qSoal").value = q.soal; $("qA").value = q.a || ""; $("qB").value = q.b || ""; $("qC").value = q.c || ""; $("qD").value = q.d || "";
+    if (q.tipe === "isian") $("qKunciIsian").value = q.kunci; else $("qKunci").value = q.kunci; $("formJudul").textContent = "Ubah Soal";
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   if (del && confirm("Hapus soal ini?")) { await remove(ref(db, `bank/${del}`)); toast("Soal dihapus"); }
 };
 
+function setTipe() {
+  const isian = $("qTipe").value === "isian";
+  $("pgWrap").classList.toggle("hidden", isian);
+  $("kunciPgWrap").classList.toggle("hidden", isian);
+  $("kunciIsianWrap").classList.toggle("hidden", !isian);
+  ["qA", "qB", "qC", "qD"].forEach((id) => $(id).required = !isian);
+  $("qKunciIsian").required = isian;
+}
+$("qTipe").onchange = setTipe;
+
 function resetForm() {
+  const tp = $("qTipe").value;
   $("form").reset(); $("qId").value = ""; $("formJudul").textContent = "Tambah Soal";
+  $("qTipe").value = tp; setTipe();
 }
 $("batal").onclick = resetForm;
 
 $("form").onsubmit = async (e) => {
   e.preventDefault();
-  const data = {
-    sesi: Number($("qSesi").value), paket: $("qPaket").value.trim(),
-    soal: $("qSoal").value.trim(), a: $("qA").value.trim(), b: $("qB").value.trim(),
-    c: $("qC").value.trim(), d: $("qD").value.trim(), kunci: $("qKunci").value
-  };
+  const isian = $("qTipe").value === "isian";
+  const data = isian
+    ? { sesi: Number($("qSesi").value), tipe: "isian", paket: $("qPaket").value.trim(), soal: $("qSoal").value.trim(),
+        a: null, b: null, c: null, d: null, kunci: $("qKunciIsian").value.trim() }
+    : { sesi: Number($("qSesi").value), tipe: "pg", paket: $("qPaket").value.trim(),
+        soal: $("qSoal").value.trim(), a: $("qA").value.trim(), b: $("qB").value.trim(),
+        c: $("qC").value.trim(), d: $("qD").value.trim(), kunci: $("qKunci").value };
   const id = $("qId").value;
   if (id) { await update(ref(db, `bank/${id}`), data); toast("Soal diperbarui"); }
   else { await set(push(ref(db, "bank")), { ...data, dibuat: Date.now() }); toast("Soal ditambahkan"); }
@@ -91,12 +107,13 @@ $("hapusFilter").onclick = async () => {
 };
 
 // ---------- Template & ekspor ----------
-const HEADER = ["sesi", "paket", "soal", "a", "b", "c", "d", "kunci"];
+const HEADER = ["sesi", "tipe", "paket", "soal", "a", "b", "c", "d", "kunci"];
 const CONTOH = [
-  [1, "Babak 1", "Siapa pengarang kitab Alfiyah?", "Imam Nawawi", "Ibnu Malik", "Imam Ghazali", "Ibnu Hajar", "B"],
-  [2, "Babak 1", "Berapakah hasil 12 x 12?", "124", "144", "142", "132", "B"],
-  [3, "Babak 1", "Ibu kota Provinsi Jawa Barat adalah...", "Bogor", "Bekasi", "Bandung", "Cirebon", "C"]
-];
+  [1, "pg", "Babak 1", "Siapa pengarang kitab Alfiyah?", "Imam Nawawi", "Ibnu Malik", "Imam Ghazali", "Ibnu Hajar", "B"],
+  [1, "isian", "Babak 1", "Di kota manakah Nahdlatul Ulama didirikan?", "", "", "", "", "Surabaya"],
+  [2, "pg", "Babak 1", "Berapakah hasil 12 x 12?", "124", "144", "142", "132", "B"],
+  [3, "isian", "Babak 1", "Ibu kota Provinsi Jawa Barat adalah...", "", "", "", "", "Bandung"]
+]
 function download(name, blob) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -109,12 +126,12 @@ function toCsv(rows) {
 $("tplCsv").onclick = () => download("template-soal.csv", new Blob(["﻿" + toCsv([HEADER, ...CONTOH])], { type: "text/csv" }));
 $("tplXlsx").onclick = () => {
   const ws = XLSX.utils.aoa_to_sheet([HEADER, ...CONTOH]);
-  ws["!cols"] = [{ wch: 6 }, { wch: 12 }, { wch: 50 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 7 }];
+  ws["!cols"] = [{ wch: 6 }, { wch: 7 }, { wch: 12 }, { wch: 50 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 7 }];
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Soal");
   XLSX.writeFile(wb, "template-soal.xlsx");
 };
 $("ekspor").onclick = () => {
-  const rows = items().map((q) => [q.sesi, q.paket || "", q.soal, q.a, q.b, q.c, q.d, q.kunci]);
+  const rows = items().map((q) => [q.sesi, q.tipe || "pg", q.paket || "", q.soal, q.a || "", q.b || "", q.c || "", q.d || "", q.kunci]);
   const ws = XLSX.utils.aoa_to_sheet([HEADER, ...rows]);
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Soal");
   XLSX.writeFile(wb, "bank-soal-cerdas-cermat.xlsx");
@@ -129,7 +146,8 @@ const ALIAS = {
   b: ["b", "opsi b", "pilihan b", "opsib"],
   c: ["c", "opsi c", "pilihan c", "opsic"],
   d: ["d", "opsi d", "pilihan d", "opsid"],
-  kunci: ["kunci", "jawaban", "kunci jawaban", "answer"]
+  kunci: ["kunci", "jawaban", "kunci jawaban", "answer"],
+  tipe: ["tipe", "jenis", "tipe soal", "jenis soal"]
 };
 function normKey(k) { return String(k).toLowerCase().replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
 
@@ -142,15 +160,20 @@ function parseWorkbook(wb) {
       const nk = normKey(k);
       for (const [field, al] of Object.entries(ALIAS)) if (al.includes(nk)) m[field] = String(v).trim();
     }
-    const sesi = Number(m.sesi), kunci = (m.kunci || "").toUpperCase().replace(/[^ABCD]/g, "").slice(0, 1);
+    const sesi = Number(m.sesi);
+    const tp = (m.tipe || "").toLowerCase();
+    // isian jika ditulis "isian", atau kolom a-d kosong semua
+    const isian = tp.startsWith("isi") || (!tp && !m.a && !m.b && !m.c && !m.d && m.kunci);
+    const kunci = isian ? (m.kunci || "").trim() : (m.kunci || "").toUpperCase().replace(/[^ABCD]/g, "").slice(0, 1);
     const errs = [];
     if (![1, 2, 3].includes(sesi)) errs.push("sesi harus 1/2/3");
     if (!m.soal) errs.push("soal kosong");
-    ["a", "b", "c", "d"].forEach((o) => { if (!m[o]) errs.push(`opsi ${o.toUpperCase()} kosong`); });
-    if (!kunci) errs.push("kunci harus A/B/C/D");
+    if (!isian) ["a", "b", "c", "d"].forEach((o) => { if (!m[o]) errs.push(`opsi ${o.toUpperCase()} kosong`); });
+    if (!kunci) errs.push(isian ? "kunci isian kosong" : "kunci harus A/B/C/D");
     if (!m.soal && !m.a && !m.sesi) return; // baris kosong
     if (errs.length) bad.push(`Baris ${i + 2}: ${errs.join(", ")}`);
-    else ok.push({ sesi, paket: m.paket || "", soal: m.soal, a: m.a, b: m.b, c: m.c, d: m.d, kunci });
+    else if (isian) ok.push({ sesi, tipe: "isian", paket: m.paket || "", soal: m.soal, kunci });
+    else ok.push({ sesi, tipe: "pg", paket: m.paket || "", soal: m.soal, a: m.a, b: m.b, c: m.c, d: m.d, kunci });
   });
   return { ok, bad };
 }
@@ -161,7 +184,8 @@ function showPreview({ ok, bad }) {
   const ada = pakets.filter((p) => Object.values(bank).some((q) => q.paket === p));
   $("impPreview").innerHTML =
     `<div><b>${ok.length}</b> soal siap diimpor ` +
-    `(S1: ${ok.filter((q) => q.sesi === 1).length}, S2: ${ok.filter((q) => q.sesi === 2).length}, S3: ${ok.filter((q) => q.sesi === 3).length}).</div>` +
+    `(S1: ${ok.filter((q) => q.sesi === 1).length}, S2: ${ok.filter((q) => q.sesi === 2).length}, S3: ${ok.filter((q) => q.sesi === 3).length}` +
+    ` · PG ${ok.filter((q) => q.tipe === "pg").length}, isian ${ok.filter((q) => q.tipe === "isian").length}).</div>` +
     (ada.length ? `<div style="color:#7a5a00;margin-top:.4rem">⚠️ Paket <b>${ada.map(esc).join(", ")}</b> sudah ada di bank soal. Mengimpor lagi akan membuat soal ganda.</div>` : "") +
     (bad.length ? `<div style="color:var(--merah);margin-top:.4rem"><b>${bad.length} baris dilewati:</b><br>${bad.slice(0, 15).map(esc).join("<br>")}${bad.length > 15 ? "<br>..." : ""}</div>` : "");
   $("impGo").classList.toggle("hidden", !ok.length);

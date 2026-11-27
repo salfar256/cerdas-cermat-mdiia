@@ -45,6 +45,7 @@ export const OPTIONS = ["A", "B", "C", "D"];
 export const DEFAULT_SETTINGS = {
   s1Correct: 100,          // sesi 1 benar
   s1Time: 30,              // detik
+  s1PerTeam: 5,            // jatah soal sesi 1 per kelompok (dihabiskan berurutan)
   s2Points: "100,80,60,40",// sesi 2: benar ke-1, ke-2, ke-3, ke-4
   s2Time: 20,
   s3Correct: 100,          // sesi 3 benar

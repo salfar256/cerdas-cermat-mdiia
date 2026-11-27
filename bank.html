@@ -25,6 +25,7 @@
         <div class="row between">
           <h2 style="margin:0">Daftar Soal <span id="jumlah" class="pill"></span></h2>
           <div class="row">
+            <select id="fTipe" style="width:auto"><option value="">Semua tipe</option><option value="pg">Pilihan ganda</option><option value="isian">Isian singkat</option></select>
             <select id="fSesi" style="width:auto">
               <option value="">Semua sesi</option>
               <option value="1">Sesi 1 · Kelompok</option>
@@ -63,15 +64,19 @@
                 <input type="text" id="qPaket" placeholder="mis. Babak Final" list="paketList"></div>
               <datalist id="paketList"></datalist>
             </div>
+            <div><label>Tipe soal</label>
+              <select id="qTipe"><option value="pg">Pilihan ganda (A–D, dinilai otomatis)</option><option value="isian">Isian singkat (dinilai juri)</option></select></div>
             <div><label>Pertanyaan</label><textarea id="qSoal" required></textarea></div>
-            <div class="grid two">
+            <div class="grid two" id="pgWrap">
               <div><label>A</label><input type="text" id="qA" required></div>
               <div><label>B</label><input type="text" id="qB" required></div>
               <div><label>C</label><input type="text" id="qC" required></div>
               <div><label>D</label><input type="text" id="qD" required></div>
             </div>
-            <div><label>Kunci jawaban</label>
+            <div id="kunciPgWrap"><label>Kunci jawaban</label>
               <select id="qKunci"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
+            <div id="kunciIsianWrap" class="hidden"><label>Kunci jawaban (ditampilkan ke juri)</label>
+              <input type="text" id="qKunciIsian" placeholder="mis. KH. Hasyim Asy'ari"></div>
             <div class="row">
               <button class="btn" id="simpan">Simpan</button>
               <button class="btn abu" type="button" id="batal">Kosongkan</button>
@@ -81,7 +86,7 @@
 
         <div class="card">
           <h2>Impor dari Excel / CSV</h2>
-          <p class="small muted">Kolom: <b>sesi, paket, soal, a, b, c, d, kunci</b>. Baris pertama adalah judul kolom. Sesi diisi 1, 2, atau 3. Kunci diisi A/B/C/D.</p>
+          <p class="small muted">Kolom: <b>sesi, tipe, paket, soal, a, b, c, d, kunci</b>. Baris pertama judul kolom. Sesi: 1/2/3. Tipe: <b>pg</b> atau <b>isian</b>. Untuk pg, kunci A/B/C/D. Untuk isian, kolom a–d dikosongkan dan kunci diisi teks jawabannya.</p>
           <div class="row">
             <button class="btn garis kecil" id="tplXlsx">⬇ Template Excel</button>
             <button class="btn garis kecil" id="tplCsv">⬇ Template CSV</button>

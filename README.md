@@ -18,9 +18,11 @@ Alamat setelah aktif: **https://salfar256.github.io/cerdas-cermat-mdiia/**
 
 ## Aturan permainan (bawaan, bisa diubah di operator)
 
-- **Sesi 1 – Soal Kelompok:** soal bergiliran per kelompok. Benar **+100**, salah/tidak menjawab: soal hangus (0). Waktu 30 detik.
+- **Sesi 1 – Soal Kelompok:** kelompok 1 menghabiskan jatahnya dulu (bawaan 5 soal), lalu kelompok 2, dan seterusnya. Benar **+100**, salah/tidak menjawab: soal hangus (0). Waktu 30 detik.
 - **Sesi 2 – Adu Cepat:** semua kelompok menjawab. Hanya jawaban benar yang diurutkan berdasarkan waktu masuk ke server: **+100 / +80 / +60 / +40**. Salah = 0. Waktu 20 detik.
 - **Sesi 3 – Rebutan:** jeda baca soal 3 detik, lalu tombol dibuka 15 detik. Yang pertama menekan menjawab dalam 10 detik. Benar **+100**, salah **−50**, lalu kelompok itu terkunci dan rebutan dibuka lagi untuk kelompok lain.
+
+**Tipe soal:** pilihan ganda (dinilai otomatis) atau isian singkat (peserta mengetik atau menjawab lisan; juri menekan Benar/Salah di halaman operator). Satu paket boleh mencampur keduanya.
 
 Urutan tercepat memakai **jam server Firebase**, bukan jam HP, sehingga adil walau jam HP berbeda.
 
@@ -53,9 +55,10 @@ Tips: pakai satu WiFi yang sama untuk semua HP agar adu cepat lebih adil. Jika H
 
 ## Format impor soal
 
-Kolom (baris pertama judul): `sesi, paket, soal, a, b, c, d, kunci`
+Kolom (baris pertama judul): `sesi, tipe, paket, soal, a, b, c, d, kunci`
 - `sesi`: 1, 2, atau 3
+- `tipe`: `pg` atau `isian` (untuk isian, kolom a–d dikosongkan dan `kunci` diisi teks jawaban)
 - `paket`: opsional (mis. "Babak Final"). Ruang lomba bisa dibatasi ke satu paket.
-- `kunci`: A/B/C/D
+- `kunci`: A/B/C/D untuk pg, teks jawaban untuk isian
 
 Contoh ada di `template-soal.csv`, atau unduh template Excel dari halaman Bank Soal.

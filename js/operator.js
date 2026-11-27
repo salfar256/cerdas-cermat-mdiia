@@ -144,7 +144,7 @@ $("sesiTabs").onclick = async (e) => {
   if (isActive() && !confirm("Soal sedang berjalan. Pindah sesi sekarang?")) return;
   await update(R(), { state: { session: sesi, phase: "idle", msg: "" }, current: null, reveal: null });
 };
-function isActive() { return ["open", "ready", "buzz", "answering"].includes(S().phase); }
+function isActive() { return ["open", "ready", "buzz", "answering", "judging"].includes(S().phase); }
 
 // ---------- Daftar soal ----------
 const normSoal = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -184,11 +184,19 @@ function renderPilihSoal() {
 function renderGiliran() {
   const s = S();
   $("giliranWrap").classList.toggle("hidden", (s.session || 1) !== 1);
-  const teams = teamList(room);
-  const next = teams[((room.meta?.turnIdx ?? -1) + 1) % teams.length];
+  const next = nextTurn();
   const cur = $("pilihGiliran").dataset.auto === "0" ? $("pilihGiliran").value : next?.id;
-  $("pilihGiliran").innerHTML = teams.map((t) => `<option value="${t.id}">${esc(t.name)}</option>`).join("");
+  const cnt = room.meta?.s1count || {}, quota = settingsOf(room).s1PerTeam;
+  $("pilihGiliran").innerHTML = teamList(room).map((t) => `<option value="${t.id}">${esc(t.name)} (${cnt[t.id] || 0}/${quota})</option>`).join("");
   if (cur) $("pilihGiliran").value = cur;
+}
+
+// Sesi 1: kelompok pertama menghabiskan jatahnya dulu, baru kelompok berikutnya.
+function nextTurn() {
+  const teams = teamList(room);
+  const cnt = room.meta?.s1count || {}, quota = settingsOf(room).s1PerTeam;
+  return teams.find((t) => (cnt[t.id] || 0) < quota) ||
+    teams.reduce((m, t) => ((cnt[t.id] || 0) < (cnt[m.id] || 0) ? t : m), teams[0]);
 }
 $("pilihGiliran").onchange = () => { $("pilihGiliran").dataset.auto = "0"; };
 
@@ -207,9 +215,10 @@ $("btnMulai").onclick = async () => {
   const upd = {};
   if (sesi === 1) {
     const turn = $("pilihGiliran").value || teams[0].id;
+    const ke = (room.meta?.s1count?.[turn] || 0) + 1;
     state.phase = "open"; state.turnTeam = turn; state.endsAt = serverNow() + st.s1Time * 1000;
-    state.msg = `Giliran ${room.teams[turn].name}`;
-    upd["meta/turnIdx"] = teams.findIndex((t) => t.id === turn);
+    state.msg = `Giliran ${room.teams[turn].name} · soal ke-${ke} dari ${st.s1PerTeam}`;
+    upd[`meta/s1count/${turn}`] = ke;
     $("pilihGiliran").dataset.auto = "1";
   } else if (sesi === 2) {
     state.phase = "open"; state.endsAt = serverNow() + st.s2Time * 1000;
@@ -220,7 +229,10 @@ $("btnMulai").onclick = async () => {
   }
   Object.assign(upd, {
     state,
-    current: { qid, soal: q.soal, a: q.a, b: q.b, c: q.c, d: q.d, session: sesi, number: n },
+    current: isIsian(q)
+      ? { qid, soal: q.soal, tipe: "isian", session: sesi, number: n }
+      : { qid, soal: q.soal, tipe: "pg", a: q.a, b: q.b, c: q.c, d: q.d, session: sesi, number: n },
+    [`judge/${qid}`]: null,
     reveal: null,
     [`private/${qid}`]: q.kunci,
     [`used/${qid}`]: true,
@@ -254,7 +266,7 @@ $("btnJuara").onclick = () => update(R(), { "state/phase": "final", "state/msg":
 
 $("btnResetSkor").onclick = async () => {
   if (!confirm("Reset lomba? Semua skor jadi 0, tanda soal terpakai dihapus, dan catatan dikosongkan.")) return;
-  const upd = { used: null, answers: null, buzz: null, log: null, current: null, reveal: null, "meta/count": null, "meta/turnIdx": -1, state: { session: 1, phase: "idle", msg: "" } };
+  const upd = { used: null, answers: null, buzz: null, log: null, current: null, reveal: null, "meta/count": null, "meta/s1count": null, judge: null, state: { session: 1, phase: "idle", msg: "" } };
   teamList(room).forEach((t) => upd[`teams/${t.id}/score`] = 0);
   await update(R(), upd);
 };
@@ -298,11 +310,14 @@ function engine() {
   const now = serverNow();
   if (s.phase === "open") {
     const expired = now > s.endsAt + GRACE_ANSWER;
-    if (s.session === 1 && (ans[s.turnTeam] || expired)) act(base + "|fin", finalizeS1);
+    const isian = room.current?.tipe === "isian";
+    if (s.session === 1 && (ans[s.turnTeam] || expired)) {
+      if (isian) act(base + "|judge", toJudging); else act(base + "|fin", () => finalizeS1());
+    }
     if (s.session === 2) {
       const aktif = teamList(room).filter((t) => t.uid);
       const semua = aktif.length > 0 && aktif.every((t) => ans[t.id]);
-      if (semua || expired) act(base + "|fin", finalizeS2);
+      if (semua || expired) { if (isian) act(base + "|judge", toJudging); else act(base + "|fin", () => finalizeS2()); }
     }
   }
   if (s.phase === "ready" && now >= s.endsAt) act(`${base}|${s.buzzKey}|open`, openBuzz);
@@ -312,25 +327,36 @@ function engine() {
     else if (now > s.endsAt + GRACE_BUZZ) act(`${base}|${s.buzzKey}|none`, noBuzz);
   }
   if (s.phase === "answering") {
-    if (ans[s.answeringTeam] || now > s.endsAt + GRACE_ANSWER) act(`${base}|${s.buzzKey}|grade`, gradeS3);
+    if (ans[s.answeringTeam] || now > s.endsAt + GRACE_ANSWER) {
+      if (room.current?.tipe === "isian") act(`${base}|${s.buzzKey}|judge`, toJudging);
+      else act(`${base}|${s.buzzKey}|grade`, () => gradeS3());
+    }
   }
 }
 setInterval(() => { engine(); renderStatus(); }, 250);
 
-async function finalizeS1() {
+const isIsian = (q) => (q?.tipe || "pg") === "isian";
+const ansStr = (a) => (a ? (a.choice ?? a.text ?? null) : null);
+
+async function toJudging() {
+  await update(R(), { "state/phase": "judging", "state/msg": "Menunggu keputusan juri..." });
+}
+
+async function finalizeS1(verdict) {
   const s = S(), st = settingsOf(room), key = keyOf(s.qid);
   const a = room.answers?.[s.qid]?.[s.turnTeam];
-  const correct = !!a && a.choice === key;
+  const correct = verdict !== undefined ? verdict : (!!a && a.choice === key);
+  const isian = room.current?.tipe === "isian";
   const pts = correct ? st.s1Correct : 0;
   const nm = room.teams[s.turnTeam].name;
   const upd = {
     "state/phase": "reveal",
-    "state/msg": correct ? `${nm} BENAR! +${pts}` : (a ? `${nm} salah. Soal hangus.` : `Waktu habis. Soal hangus.`),
-    reveal: { qid: s.qid, key, results: { [s.turnTeam]: { choice: a?.choice || null, correct, points: pts } } }
+    "state/msg": correct ? `${nm} BENAR! +${pts}` : (a || isian ? `${nm} salah. Soal hangus.` : `Waktu habis. Soal hangus.`),
+    reveal: { qid: s.qid, key, results: { [s.turnTeam]: { choice: ansStr(a) || (isian ? "(lisan)" : null), correct, points: pts } } }
   };
   if (pts) upd[`teams/${s.turnTeam}/score`] = increment(pts);
   sfx(upd, correct ? "benar" : "salah");
-  logEntry(upd, `S1 no.${s.number} · ${nm}: ${a ? a.choice : "tidak menjawab"} → ${correct ? "+" + pts : "0"}`);
+  logEntry(upd, `S1 no.${s.number} · ${nm}: ${ansStr(a) || (isian ? "lisan" : "tidak menjawab")} → ${correct ? "+" + pts : "0"}`);
   await update(R(), upd);
 }
 
@@ -339,7 +365,7 @@ function s2Table(st) {
   return arr.length ? arr : [100, 80, 60, 40];
 }
 
-async function finalizeS2() {
+async function finalizeS2(judged) {
   const s = S(), st = settingsOf(room), key = keyOf(s.qid);
   const ans = room.answers?.[s.qid] || {};
   const table = s2Table(st);
@@ -349,12 +375,12 @@ async function finalizeS2() {
   const upd = {};
   const ringkas = [];
   list.forEach((a) => {
-    const correct = a.choice === key;
+    const correct = judged ? judged[a.t] === true : a.choice === key;
     let pts = 0, r = null;
     if (correct) { pts = table[rank] ?? table[table.length - 1]; rank++; r = rank; }
-    results[a.t] = { choice: a.choice, correct, points: pts, rank: r, ms: Math.max(0, a.ts - (s.openedAt || a.ts)) };
+    results[a.t] = { choice: ansStr(a), correct, points: pts, rank: r, ms: Math.max(0, a.ts - (s.openedAt || a.ts)) };
     if (pts) upd[`teams/${a.t}/score`] = increment(pts);
-    ringkas.push(`${room.teams[a.t]?.name}: ${a.choice}${correct ? " +" + pts : " ✗"}`);
+    ringkas.push(`${room.teams[a.t]?.name}: ${ansStr(a)}${correct ? " +" + pts : " ✗"}`);
   });
   teamList(room).forEach((t) => { if (!results[t.id]) results[t.id] = { choice: null, correct: false, points: 0, rank: null }; });
   upd["state/phase"] = "reveal";
@@ -391,25 +417,26 @@ async function noBuzz() {
   await update(R(), upd);
 }
 
-async function gradeS3() {
+async function gradeS3(verdict) {
   const s = S(), st = settingsOf(room), key = keyOf(s.qid);
   const team = s.answeringTeam, nm = room.teams[team].name;
   const a = room.answers?.[s.qid]?.[team];
-  const correct = !!a && a.choice === key;
+  const correct = verdict !== undefined ? verdict : (!!a && a.choice === key);
+  const lisan = room.current?.tipe === "isian" ? "(lisan)" : null;
   const s3log = { ...(s.s3log || {}) };
   const upd = {};
   if (correct) {
-    s3log[team] = { choice: a.choice, correct: true, points: st.s3Correct };
+    s3log[team] = { choice: ansStr(a) || lisan, correct: true, points: st.s3Correct };
     upd[`teams/${team}/score`] = increment(st.s3Correct);
     upd["state/phase"] = "reveal";
     upd["state/msg"] = `${nm} BENAR! +${st.s3Correct}`;
     upd["state/s3log"] = s3log;
     upd.reveal = { qid: s.qid, key, results: s3log };
     sfx(upd, "benar");
-    logEntry(upd, `S3 no.${s.number} · ${nm}: ${a.choice} → +${st.s3Correct}`);
+    logEntry(upd, `S3 no.${s.number} · ${nm}: ${ansStr(a) || "lisan"} → +${st.s3Correct}`);
   } else {
     const pen = st.s3Wrong;
-    s3log[team] = { choice: a?.choice || null, correct: false, points: -pen };
+    s3log[team] = { choice: ansStr(a) || lisan, correct: false, points: -pen };
     if (pen) upd[`teams/${team}/score`] = increment(-pen);
     const locked = { ...(s.locked || {}), [team]: true };
     const sisa = teamList(room).filter((t) => t.uid && !locked[t.id]);
@@ -417,7 +444,7 @@ async function gradeS3() {
     upd["state/locked"] = locked;
     upd["state/answeringTeam"] = null;
     sfx(upd, "salah");
-    logEntry(upd, `S3 no.${s.number} · ${nm}: ${a ? a.choice : "tidak menjawab"} → -${pen}`);
+    logEntry(upd, `S3 no.${s.number} · ${nm}: ${ansStr(a) || (lisan ? "lisan" : "tidak menjawab")} → -${pen}`);
     if (sisa.length) {
       const n = Number(String(s.buzzKey).slice(1)) + 1;
       upd["state/phase"] = "ready";
@@ -455,6 +482,7 @@ const FASE = {
   ready: "Jeda baca soal",
   buzz: "Buzzer dibuka",
   answering: "Menunggu jawaban penekan buzzer",
+  judging: "Menunggu keputusan juri (klik Benar/Salah)",
   reveal: "Jawaban ditampilkan",
   final: "Layar menampilkan juara"
 };
@@ -475,24 +503,74 @@ function renderStatus() {
 
 function renderPreview() {
   const c = room.current, s = S();
-  if (!c) { $("preview").innerHTML = `<span class="muted">Belum ada soal yang ditampilkan.</span>`; $("hasil").innerHTML = ""; return; }
+  if (!c) { $("preview").innerHTML = `<span class="muted">Belum ada soal yang ditampilkan.</span>`; $("hasil").innerHTML = ""; $("juri").innerHTML = ""; return; }
   const key = keyOf(c.qid);
-  $("preview").innerHTML = `<div class="small muted">Soal tampil · no. ${c.number}</div>
-    <div style="font-weight:700;white-space:pre-wrap">${esc(c.soal)}</div>
-    <div class="opsi">${OPTIONS.map((o) => `<div class="${o === key ? "kunci" : ""}">${o}. ${esc(c[o.toLowerCase()])}</div>`).join("")}</div>`;
+  const isian = c.tipe === "isian";
+  $("preview").innerHTML = `<div class="row between"><span class="small muted">Soal tampil · no. ${c.number}</span>
+      <span class="pill ${isian ? "emas" : ""}">${isian ? "Isian singkat" : "Pilihan ganda"}</span></div>
+    <div style="font-weight:700;white-space:pre-wrap;font-size:1.05rem;margin-top:.3rem">${esc(c.soal)}</div>
+    ${isian ? "" : `<div class="opsi">${OPTIONS.map((o) => `<div class="${o === key ? "kunci" : ""}">${o}. ${esc(c[o.toLowerCase()])}</div>`).join("")}</div>`}
+    <div class="kunci-box">🔑 Kunci jawaban: <b>${esc(isian ? key : `${key}. ${c[String(key).toLowerCase()] || ""}`)}</b></div>`;
   const ans = room.answers?.[c.qid] || {};
   const res = room.reveal?.results || {};
   const rows = teamList(room).map((t) => {
     const a = ans[t.id], r = res[t.id];
     let ket = "";
-    if (r) ket = r.choice ? `${r.choice} ${r.correct ? "✔" : "✘"} (${r.points > 0 ? "+" : ""}${r.points})${r.rank ? " · urutan " + r.rank : ""}${r.ms != null ? " · " + (r.ms / 1000).toFixed(2) + " dtk" : ""}` : "—";
-    else if (a) ket = `menjawab ${a.choice}`;
+    if (r) ket = r.choice ? `${esc(r.choice)} ${r.correct ? "✔" : "✘"} (${r.points > 0 ? "+" : ""}${r.points})${r.rank ? " · urutan " + r.rank : ""}${r.ms != null ? " · " + (r.ms / 1000).toFixed(2) + " dtk" : ""}` : "—";
+    else if (a) ket = `menjawab <b>${esc(ansStr(a))}</b>`;
     else if (s.locked?.[t.id]) ket = "terkunci (sudah salah)";
     if (!ket) ket = isActive() ? "<span class='muted'>belum</span>" : "<span class='muted'>—</span>";
     return `<tr><td><span class="team-dot" style="display:inline-block;background:${t.color}"></span> ${esc(t.name)}</td><td>${ket}</td></tr>`;
   }).join("");
   $("hasil").innerHTML = `<table><tbody>${rows}</tbody></table>`;
+  renderJuri(c, s, ans);
 }
+
+// Panel juri untuk soal isian singkat: operator menentukan benar/salah.
+function renderJuri(c, s, ans) {
+  const el = $("juri");
+  if (c.tipe !== "isian") { el.innerHTML = ""; return; }
+  const nm = (id) => esc(room.teams[id]?.name || "");
+  const tombol = `<div class="row"><button class="btn besar" data-v="1">✔ Benar</button><button class="btn besar merah" data-v="0">✘ Salah</button></div>`;
+  if (s.session === 1 && ["open", "judging"].includes(s.phase)) {
+    const a = ans[s.turnTeam];
+    el.innerHTML = `<div class="juri-box"><div class="small muted">Penilaian juri · giliran ${nm(s.turnTeam)}</div>
+      <div class="juri-jawab">${a ? esc(a.text) : `<span class="muted">Belum ada jawaban tertulis (boleh dijawab lisan)</span>`}</div>${tombol}</div>`;
+  } else if (s.session === 3 && ["answering", "judging"].includes(s.phase) && s.answeringTeam) {
+    const a = ans[s.answeringTeam];
+    el.innerHTML = `<div class="juri-box"><div class="small muted">Penilaian juri · ${nm(s.answeringTeam)} menjawab</div>
+      <div class="juri-jawab">${a ? esc(a.text) : `<span class="muted">Belum ada jawaban tertulis (boleh dijawab lisan)</span>`}</div>${tombol}</div>`;
+  } else if (s.session === 2 && ["open", "judging"].includes(s.phase)) {
+    const j = room.judge?.[c.qid] || {};
+    const list = Object.entries(ans).map(([t, a]) => ({ t, ...a })).sort((x, y) => x.ts - y.ts);
+    el.innerHTML = `<div class="juri-box"><div class="small muted">Penilaian juri · urutan sesuai waktu masuk${s.phase === "open" ? " (jawaban masih bisa masuk)" : ""}</div>
+      <table><tbody>${list.map((a, i) => `<tr><td>${i + 1}. ${nm(a.t)}</td><td><b>${esc(a.text)}</b><div class="small muted">${((a.ts - (s.openedAt || a.ts)) / 1000).toFixed(2)} dtk</div></td>
+        <td style="white-space:nowrap"><button class="btn kecil ${j[a.t] === true ? "" : "abu"}" data-j="${a.t}|1">✔ Benar</button>
+        <button class="btn kecil ${j[a.t] === false ? "merah" : "abu"}" data-j="${a.t}|0">✘ Salah</button></td></tr>`).join("") || `<tr><td class="muted">Belum ada jawaban masuk.</td></tr>`}</tbody></table>
+      <button class="btn emas besar" data-umumkan="1" style="margin-top:.6rem" ${s.phase === "judging" ? "" : "disabled"}>📢 Umumkan hasil</button></div>`;
+  } else el.innerHTML = "";
+}
+
+$("juri").onclick = async (e) => {
+  const d = e.target.closest("button")?.dataset;
+  if (!d) return;
+  const s = S(), base = `${s.qid}|${s.runId}`;
+  if (d.v !== undefined) {
+    const v = d.v === "1";
+    if (s.session === 1) act(base + "|fin", () => finalizeS1(v));
+    if (s.session === 3) act(`${base}|${s.buzzKey}|grade`, () => gradeS3(v));
+  }
+  if (d.j) {
+    const [t, v] = d.j.split("|");
+    await update(R(), { [`judge/${s.qid}/${t}`]: v === "1" });
+  }
+  if (d.umumkan) {
+    const ans = room.answers?.[s.qid] || {}, j = room.judge?.[s.qid] || {};
+    const belum = Object.keys(ans).filter((t) => j[t] === undefined);
+    if (belum.length && !confirm(`${belum.length} jawaban belum dinilai dan akan dianggap salah. Umumkan sekarang?`)) return;
+    act(base + "|fin", () => finalizeS2(j));
+  }
+};
 
 function renderTeams() {
   $("tim").innerHTML = teamList(room).map((t) => `
