@@ -1,6 +1,6 @@
 import {
   auth, db, ref, get, onAuthStateChanged, signInWithEmailAndPassword, signOut, esc
-} from "./common.js";
+} from "./common.js?v=20261127232326";
 
 // Menampilkan form login operator. Memanggil onReady(user) jika user terdaftar sebagai admin.
 export function requireAdmin(container, onReady) {

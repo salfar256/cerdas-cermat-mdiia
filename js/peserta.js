@@ -1,7 +1,7 @@
 import {
   db, ref, onValue, set, serverTimestamp, ensureAnon, watchPublicRoom,
   SESI_NAMA, OPTIONS, isPaused, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
-} from "./common.js";
+} from "./common.js?v=20261127232326";
 
 const $ = (id) => document.getElementById(id);
 let code = null, uid = null, room = null, me = null, unwatch = null;
@@ -93,7 +93,8 @@ function render() {
   let h = "";
   const soalBox = c ? `<div class="hp-soal"><div class="small muted">Soal no. ${c.number}</div>${esc(c.soal)}</div>` : "";
   const lisan = c?.tipe === "lisan";
-  const isian = c?.tipe === "isian" || lisan;   // isian & lisan: kunci berupa teks
+  const tanpaOpsi = !!c && !c.a && !c.b && !c.c && !c.d;            // pengaman: soal tanpa opsi bukan PG
+  const isian = c?.tipe === "isian" || lisan || tanpaOpsi;   // isian & lisan: kunci berupa teks
   const opsiPG = (enabled, ringkas = false) => `<div class="hp-opsi${ringkas ? " ringkas" : ""}">${OPTIONS.map((o) => `
       <button data-o="${o}" ${enabled ? "" : "disabled"} class="${sudah === o ? "dipilih" : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></button>`).join("")}</div>`;
   // Soal isian: kolom ketik; pilihan ganda: tombol A-D
@@ -117,7 +118,7 @@ function render() {
   } else if (s.phase === "open" && s.session === 1) {
     if (s.turnTeam === me && lisan) h = msg("🙋", "Giliran Anda!") + soalBox + opsi(true);
     else if (s.turnTeam === me) h = sudah ? soalBox + msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Menunggu hasil...") : soalBox + opsi(true);
-    else h = msg("👀", `Giliran ${nm(s.turnTeam)}`, "Pilihan jawaban hanya bisa dipilih kelompok yang mendapat giliran") + soalBox + opsi(false);
+    else h = msg("👀", `Giliran ${nm(s.turnTeam)}`, isian ? "Simak jawaban kelompok yang mendapat giliran" : "Pilihan jawaban hanya bisa dipilih kelompok yang mendapat giliran") + soalBox + opsi(false);
   } else if (s.phase === "open" && s.session === 2) {
     h = soalBox + (sudah ? (sudah === "(lisan)" ? msg("✋", "Urutan Anda tercatat", "Ucapkan jawaban saat dipanggil juri") : msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Menunggu kelompok lain...")) : opsi(true));
   } else if (s.phase === "ready") {

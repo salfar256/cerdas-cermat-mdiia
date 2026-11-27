@@ -69,3 +69,7 @@ Kolom (baris pertama judul): `sesi, tipe, paket, soal, a, b, c, d, kunci`
 - `kunci`: A/B/C/D untuk pg, teks jawaban untuk isian/lisan
 
 Contoh ada di `template-soal.csv`, atau unduh template Excel dari halaman Bank Soal.
+
+## Catatan untuk pengembang
+
+Setiap kali mengubah file JS/CSS, jalankan `python3 tools/versi.py` sebelum commit. Skrip ini menambahkan nomor versi (`?v=...`) ke semua file, sehingga HP dan laptop peserta otomatis memuat versi terbaru dan tidak memakai cache lama.

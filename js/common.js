@@ -6,7 +6,7 @@ import {
 import {
   getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js";
+import { firebaseConfig } from "./firebase-config.js?v=20261127232326";
 
 export const CONFIG_OK = !String(firebaseConfig.apiKey || "").startsWith("ISI");
 if (!CONFIG_OK) {

@@ -1,5 +1,5 @@
-import { db, ref, onValue, push, set, update, remove, esc } from "./common.js";
-import { requireAdmin, toast } from "./admin-auth.js";
+import { db, ref, onValue, push, set, update, remove, esc } from "./common.js?v=20261127232326";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261127232326";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};

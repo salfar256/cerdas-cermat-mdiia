@@ -1,7 +1,7 @@
 import {
   ensureAnon, watchPublicRoom, SESI_NAMA, OPTIONS, esc, teamList, sortedTeams, secondsLeft,
   isPaused, getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
-} from "./common.js";
+} from "./common.js?v=20261127232326";
 
 const $ = (id) => document.getElementById(id);
 let room = null, lastSfx = undefined, renderSig = "", unwatch = null;
@@ -104,7 +104,7 @@ function renderMain(s, c, st) {
         <div class="angka" id="ringNum"></div></div></div>
     ${banner}
     <div class="layar-soal" style="${banner ? "margin-top:2vh" : ""}"><span class="nomor">Soal no. ${c.number}</span>${esc(c.soal)}</div>
-    ${["isian", "lisan"].includes(c.tipe)
+    ${["isian", "lisan"].includes(c.tipe) || (!c.a && !c.b && !c.c && !c.d)
       ? (key ? `<div class="layar-kunci">✔ Jawaban: ${esc(key)}</div>` : s.phase === "judging" ? `<div class="layar-tunggu">⚖️ Juri sedang menilai...</div>` : `<div class="layar-tunggu">${c.tipe === "lisan" ? "🗣️ Jawab secara lisan" : "✍️ Soal isian singkat"}</div>`)
       : `<div class="layar-opsi">${OPTIONS.map((o) => `<div class="${key ? (o === key ? "benar" : "redup") : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></div>`).join("")}</div>`}
     ${hasil}`;

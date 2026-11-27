@@ -2,8 +2,8 @@ import {
   auth, db, ref, onValue, get, set, update, remove, push, serverTimestamp, increment, signOut,
   serverNow, SESI_NAMA, SESI_PENDEK, TEAM_COLORS, TEAM_IDS, OPTIONS, DEFAULT_SETTINGS,
   settingsOf, esc, teamList, secondsLeft, preloadSounds, unlockSounds, playSound, fmtScore
-} from "./common.js";
-import { requireAdmin, toast } from "./admin-auth.js";
+} from "./common.js?v=20261127232326";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261127232326";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};
