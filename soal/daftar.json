@@ -1,17 +1,5 @@
 [
  {
-  "file": "ke-nu-an.csv",
-  "nama": "Ke-NU-an · Pilihan ganda (30 soal: S1 20, S2 5, S3 5)"
- },
- {
-  "file": "ke-nu-an-isian.csv",
-  "nama": "Ke-NU-an · Isian singkat (30 soal: S1 20, S2 5, S3 5)"
- },
- {
-  "file": "ke-nu-an-lisan.csv",
-  "nama": "Ke-NU-an · Jawab lisan (25 soal: S1 20, S3 5)"
- },
- {
   "file": "ke-nu-an-campuran.csv",
   "nama": "Ke-NU-an · Campuran PG + isian + lisan (30 soal: S1 20, S2 5, S3 5)"
  }
