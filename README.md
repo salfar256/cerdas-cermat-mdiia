@@ -80,6 +80,13 @@ Unggah lewat GitHub: buka folder → **Add file → Upload files** → Commit. L
 - Gambar tampil di layar proyektor (di samping soal) dan di HP peserta.
 - Audio diputar otomatis di layar proyektor sekali saat soal tampil; musik latar berhenti selama audio berbunyi. Operator bisa menekan **▶ Putar audio di layar** untuk mengulang. Waktu menjawab (sesi 1 & 2) dan jeda sebelum buzzer (sesi 3) otomatis ditambah sepanjang durasi audio.
 
+## Teks Arab
+
+Soal, pilihan, dan kunci boleh ditulis dengan huruf Arab berharakat (ketik langsung atau salin dari Word/Excel). Aplikasi mengenalinya otomatis:
+- teks yang seluruhnya Arab ditampilkan rata kanan dengan font **Scheherazade New** yang besar dan jelas harakatnya;
+- kalimat campuran (Indonesia + Arab) tetap rata kiri, potongan Arabnya memakai font Arab dengan urutan yang benar;
+- kolom ketik di Bank Soal dan HP peserta menyesuaikan arah tulisan.
+
 ## Format impor soal
 
 Kolom (baris pertama judul): `sesi, tipe, paket, soal, a, b, c, d, kunci, media`

@@ -1,7 +1,7 @@
 import {
   ensureAnon, watchPublicRoom, SESI_NAMA, SESI_PENDEK, OPTIONS, esc, teamList, sortedTeams, secondsLeft,
-  isPaused, mediaJenis, mediaUrl, getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
-} from "./common.js?v=20261128202713";
+  isPaused, mediaJenis, mediaUrl, teks, getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
+} from "./common.js?v=20261128203410";
 
 const $ = (id) => document.getElementById(id);
 let room = null, lastSfx = undefined, renderSig = "", unwatch = null;
@@ -255,7 +255,7 @@ function renderMain(s, c, st) {
     const rows = teamList(room).map((t) => ({ t, r: rev.results?.[t.id] || {} }))
       .sort((a, b) => (a.r.rank ?? 99) - (b.r.rank ?? 99) || (a.r.ms ?? 1e9) - (b.r.ms ?? 1e9));
     hasil = `<div class="hasil-tabel"><table><thead><tr><th>Kelompok</th><th>Jawaban</th><th>Waktu</th><th>Poin</th></tr></thead><tbody>
-      ${rows.map(({ t, r }) => `<tr><td>${esc(t.name)}</td><td>${r.choice ? (r.choice === "(lisan)" ? "🗣️ lisan" : esc(r.choice)) + (r.correct ? " ✔" : " ✘") : "—"}</td>
+      ${rows.map(({ t, r }) => `<tr><td>${esc(t.name)}</td><td>${r.choice ? (r.choice === "(lisan)" ? "🗣️ lisan" : teks(r.choice)) + (r.correct ? " ✔" : " ✘") : "—"}</td>
         <td>${r.ms != null ? (r.ms / 1000).toFixed(2) + " dtk" : "—"}</td><td>${r.points ? "+" + r.points : "0"}</td></tr>`).join("")}</tbody></table></div>`;
   }
 
@@ -269,11 +269,11 @@ function renderMain(s, c, st) {
         <div class="angka" id="ringNum"></div></div></div>
     ${banner}
     <div class="layar-soal muncul ${gambar ? "punya-gambar" : ""}" style="${banner ? "margin-top:2vh" : ""}"><span class="nomor">Soal no. ${c.number}</span>
-      <div class="teks-soal">${esc(c.soal)}${audio ? `<div class="ind-audio ${audioBerbunyi ? "bunyi" : ""}" id="indAudio">${audioBerbunyi ? "🔊 Audio soal diputar..." : "🔊 Audio soal"}</div>` : ""}</div>
+      <div class="teks-soal">${teks(c.soal)}${audio ? `<div class="ind-audio ${audioBerbunyi ? "bunyi" : ""}" id="indAudio">${audioBerbunyi ? "🔊 Audio soal diputar..." : "🔊 Audio soal"}</div>` : ""}</div>
       ${gambar ? `<img class="gambar-soal" src="${esc(mediaUrl(c.media))}" alt="">` : ""}</div>
     ${["isian", "lisan"].includes(c.tipe) || (!c.a && !c.b && !c.c && !c.d)
-      ? (key ? `<div class="layar-kunci muncul">✔ Jawaban: ${esc(key)}</div>` : s.phase === "judging" ? `<div class="layar-tunggu">⚖️ Juri sedang menilai...</div>` : `<div class="layar-tunggu">${c.tipe === "lisan" ? "🗣️ Jawab secara lisan" : "✍️ Soal isian singkat"}</div>`)
-      : `<div class="layar-opsi">${OPTIONS.map((o, i) => `<div class="${key ? (o === key ? "benar" : "redup") : "opsi-masuk"}" style="animation-delay:${0.15 + i * 0.12}s"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></div>`).join("")}</div>`}
+      ? (key ? `<div class="layar-kunci muncul">✔ Jawaban: ${teks(key)}</div>` : s.phase === "judging" ? `<div class="layar-tunggu">⚖️ Juri sedang menilai...</div>` : `<div class="layar-tunggu">${c.tipe === "lisan" ? "🗣️ Jawab secara lisan" : "✍️ Soal isian singkat"}</div>`)
+      : `<div class="layar-opsi">${OPTIONS.map((o, i) => `<div class="${key ? (o === key ? "benar" : "redup") : "opsi-masuk"}" style="animation-delay:${0.15 + i * 0.12}s"><b>${o}</b><span class="isi-opsi">${teks(c[o.toLowerCase()])}</span></div>`).join("")}</div>`}
     ${hasil}`;
 }
 

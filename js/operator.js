@@ -1,9 +1,9 @@
 import {
   auth, db, ref, onValue, get, set, update, remove, push, serverTimestamp, increment, signOut,
   serverNow, SESI_NAMA, SESI_PENDEK, TEAM_COLORS, TEAM_IDS, OPTIONS, DEFAULT_SETTINGS,
-  settingsOf, esc, mediaJenis, mediaUrl, teamList, secondsLeft, preloadSounds, unlockSounds, playSound, fmtScore
-} from "./common.js?v=20261128202713";
-import { requireAdmin, toast } from "./admin-auth.js?v=20261128202713";
+  settingsOf, esc, teks, mediaJenis, mediaUrl, teamList, secondsLeft, preloadSounds, unlockSounds, playSound, fmtScore
+} from "./common.js?v=20261128203410";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261128203410";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};
@@ -594,19 +594,19 @@ function renderPreview() {
   const isian = dinilaiJuri(c);
   setPreview(`<div class="row between"><span class="small muted">Soal tampil · no. ${c.number}</span>
       <span class="pill ${isian ? "emas" : ""}">${TIPE_LABEL[c.tipe] || "Pilihan ganda"}</span></div>
-    <div style="font-weight:700;white-space:pre-wrap;font-size:1.05rem;margin-top:.3rem">${esc(c.soal)}</div>
+    <div style="font-weight:700;white-space:pre-wrap;font-size:1.05rem;margin-top:.3rem">${teks(c.soal)}</div>
     ${c.media ? (mediaJenis(c.media) === "audio"
       ? `<div class="row" style="margin-top:.5rem"><span class="pill">🔊 ${esc(c.media)}</span><button class="btn biru kecil" id="putarAudio">▶ Putar audio di layar</button><span class="small muted">Pratinjau juri:</span><audio controls preload="none" src="${esc(mediaUrl(c.media))}" style="height:32px"></audio></div>`
       : `<img src="${esc(mediaUrl(c.media))}" style="max-height:160px;margin-top:.5rem;border-radius:8px;border:1px solid var(--garis)">`) : ""}
-    ${isian ? "" : `<div class="opsi">${OPTIONS.map((o) => `<div class="${o === key ? "kunci" : ""}">${o}. ${esc(c[o.toLowerCase()])}</div>`).join("")}</div>`}
-    <div class="kunci-box">🔑 Kunci jawaban: <b>${esc(isian ? key : `${key}. ${c[String(key).toLowerCase()] || ""}`)}</b></div>`);
+    ${isian ? "" : `<div class="opsi">${OPTIONS.map((o) => `<div class="${o === key ? "kunci" : ""}">${o}. ${teks(c[o.toLowerCase()])}</div>`).join("")}</div>`}
+    <div class="kunci-box">🔑 Kunci jawaban: <b>${isian ? teks(key) : `${key}. ${teks(c[String(key).toLowerCase()] || "")}`}</b></div>`);
   const ans = room.answers?.[c.qid] || {};
   const res = room.reveal?.results || {};
   const rows = teamList(room).map((t) => {
     const a = ans[t.id], r = res[t.id];
     let ket = "";
-    if (r) ket = r.choice ? `${esc(r.choice)} ${r.correct ? "✔" : "✘"} (${r.points > 0 ? "+" : ""}${r.points})${r.rank ? " · urutan " + r.rank : ""}${r.ms != null ? " · " + (r.ms / 1000).toFixed(2) + " dtk" : ""}` : "—";
-    else if (a) ket = a.text === "(lisan)" ? "🗣️ siap menjawab lisan" : `menjawab <b>${esc(ansStr(a))}</b>`;
+    if (r) ket = r.choice ? `${teks(r.choice)} ${r.correct ? "✔" : "✘"} (${r.points > 0 ? "+" : ""}${r.points})${r.rank ? " · urutan " + r.rank : ""}${r.ms != null ? " · " + (r.ms / 1000).toFixed(2) + " dtk" : ""}` : "—";
+    else if (a) ket = a.text === "(lisan)" ? "🗣️ siap menjawab lisan" : `menjawab <b>${teks(ansStr(a))}</b>`;
     else if (s.locked?.[t.id]) ket = "terkunci (sudah salah)";
     if (!ket) ket = isActive() ? "<span class='muted'>belum</span>" : "<span class='muted'>—</span>";
     return `<tr><td><span class="team-dot" style="display:inline-block;background:${t.color}"></span> ${esc(t.name)}</td><td>${ket}</td></tr>`;
@@ -621,7 +621,7 @@ function renderJuri(c, s, ans) {
   if (!dinilaiJuri(c)) { el.innerHTML = ""; return; }
   const lisan = c.tipe === "lisan";
   const jawabTeks = (a) => !a ? `<span class="muted">${lisan ? "🗣️ Dengarkan jawaban lisan peserta" : "Belum ada jawaban tertulis (boleh dijawab lisan)"}</span>`
-    : a.text === "(lisan)" ? "🗣️ lisan" : esc(a.text);
+    : a.text === "(lisan)" ? "🗣️ lisan" : teks(a.text);
   const nm = (id) => esc(room.teams[id]?.name || "");
   const tombol = `<div class="row"><button class="btn besar" data-v="1">✔ Benar</button><button class="btn besar merah" data-v="0">✘ Salah</button></div>`;
   if (s.session === 1 && ["open", "judging"].includes(s.phase)) {

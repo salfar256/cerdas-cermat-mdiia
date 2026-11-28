@@ -1,7 +1,7 @@
 import {
   db, ref, onValue, set, update, serverTimestamp, increment, onDisconnect, ensureAnon, watchPublicRoom,
-  SESI_NAMA, OPTIONS, isPaused, mediaJenis, mediaUrl, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
-} from "./common.js?v=20261128202713";
+  SESI_NAMA, OPTIONS, isPaused, mediaJenis, mediaUrl, esc, teks, teamList, sortedTeams, secondsLeft, getParam, fmtScore
+} from "./common.js?v=20261128203410";
 
 const $ = (id) => document.getElementById(id);
 let code = null, uid = null, room = null, me = null, unwatch = null;
@@ -152,20 +152,20 @@ function render() {
 
   let h = "";
   const mj = mediaJenis(c?.media);
-  const soalBox = c ? `<div class="hp-soal"><div class="small muted">Soal no. ${c.number}</div>${esc(c.soal)}
+  const soalBox = c ? `<div class="hp-soal"><div class="small muted">Soal no. ${c.number}</div><div class="teks-soal">${teks(c.soal)}</div>
     ${mj === "gambar" ? `<img src="${esc(mediaUrl(c.media))}" alt="" class="hp-gambar">` : mj === "audio" ? `<div class="small" style="margin-top:.5rem;color:var(--hijau)">🔊 Dengarkan audio soal di layar</div>` : ""}</div>` : "";
   const lisan = c?.tipe === "lisan";
   const tanpaOpsi = !!c && !c.a && !c.b && !c.c && !c.d;            // pengaman: soal tanpa opsi bukan PG
   const isian = c?.tipe === "isian" || lisan || tanpaOpsi;   // isian & lisan: kunci berupa teks
   const opsiPG = (enabled, ringkas = false) => `<div class="hp-opsi${ringkas ? " ringkas" : ""}">${OPTIONS.map((o) => `
-      <button data-o="${o}" ${enabled ? "" : "disabled"} class="${sudah === o ? "dipilih" : ""}"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></button>`).join("")}</div>`;
+      <button data-o="${o}" ${enabled ? "" : "disabled"} class="${sudah === o ? "dipilih" : ""}"><b>${o}</b><span class="isi-opsi">${teks(c[o.toLowerCase()])}</span></button>`).join("")}</div>`;
   // Soal isian: kolom ketik; pilihan ganda: tombol A-D
   const opsi = (enabled, ringkas = false) => lisan
     ? (enabled ? (s.session === 2
         ? `<button class="buzz-btn" id="jawabLisan">SAYA<br>JAWAB</button><div class="center muted">Tekan secepatnya, lalu ucapkan jawaban saat dipanggil juri</div>`
         : msg("🗣️", "Ucapkan jawaban Anda kepada juri")) : "")
     : isian
-    ? (enabled ? `<form class="hp-isian" id="fIsian"><input id="isianTxt" maxlength="200" autocomplete="off" placeholder="Ketik jawaban..."><button class="btn besar">Kirim jawaban</button></form>` : "")
+    ? (enabled ? `<form class="hp-isian" id="fIsian"><input id="isianTxt" dir="auto" lang="ar" maxlength="200" autocomplete="off" placeholder="Ketik jawaban..."><button class="btn besar">Kirim jawaban</button></form>` : "")
     : opsiPG(enabled, ringkas);
   const msg = (ico, text, sub = "") => `<div class="hp-msg"><span class="big">${ico}</span>${text}${sub ? `<div class="small muted" style="font-weight:500;margin-top:.4rem">${sub}</div>` : ""}</div>`;
   const nm = (id) => esc(room.teams[id]?.name || "");
@@ -185,10 +185,10 @@ function render() {
     h = msg("⏳", "Menunggu soal...");
   } else if (s.phase === "open" && s.session === 1) {
     if (s.turnTeam === me && lisan) h = msg("🙋", "Giliran Anda!") + soalBox + opsi(true);
-    else if (s.turnTeam === me) h = sudah ? soalBox + msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Menunggu hasil...") : soalBox + opsi(true);
+    else if (s.turnTeam === me) h = sudah ? soalBox + msg("📨", `Jawaban terkirim: ${teks(sudah)}`, "Menunggu hasil...") : soalBox + opsi(true);
     else h = msg("👀", `Giliran ${nm(s.turnTeam)}`, isian ? "Simak jawaban kelompok yang mendapat giliran" : "Pilihan jawaban hanya bisa dipilih kelompok yang mendapat giliran") + soalBox + opsi(false);
   } else if (s.phase === "open" && s.session === 2) {
-    h = soalBox + (sudah ? (sudah === "(lisan)" ? msg("✋", "Urutan Anda tercatat", "Ucapkan jawaban saat dipanggil juri") : msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Menunggu kelompok lain...")) : opsi(true));
+    h = soalBox + (sudah ? (sudah === "(lisan)" ? msg("✋", "Urutan Anda tercatat", "Ucapkan jawaban saat dipanggil juri") : msg("📨", `Jawaban terkirim: ${teks(sudah)}`, "Menunggu kelompok lain...")) : opsi(true));
   } else if (s.phase === "ready") {
     h = soalBox + opsi(false, true) + `<button class="buzz-btn" disabled>TUNGGU</button>` +
       (s.locked?.[me] ? msg("🔒", "Kelompok Anda sudah menjawab salah") : `<div class="center muted">Buzzer segera dibuka...</div>`);
@@ -199,20 +199,20 @@ function render() {
       (lk ? msg("🔒", "Kelompok Anda sudah menjawab salah") : kalah ? `<div class="center muted">Kalah cepat...</div>` : "");
   } else if (s.phase === "answering") {
     if (s.answeringTeam === me && lisan) h = msg("🙋", "Anda tercepat!", "Ucapkan jawaban Anda kepada juri sekarang") + soalBox;
-    else if (s.answeringTeam === me) h = msg("🙋", isian ? "Anda tercepat! Jawab:" : "Anda tercepat! Pilih jawaban:", isian ? "Ketik jawaban, atau jawab lisan kepada juri" : "") + soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${esc(sudah)}`) : opsi(true));
+    else if (s.answeringTeam === me) h = msg("🙋", isian ? "Anda tercepat! Jawab:" : "Anda tercepat! Pilih jawaban:", isian ? "Ketik jawaban, atau jawab lisan kepada juri" : "") + soalBox + (sudah ? msg("📨", `Jawaban terkirim: ${teks(sudah)}`) : opsi(true));
     else h = msg("🙋", `${nm(s.answeringTeam)} sedang menjawab`) + soalBox + opsi(false);
   } else if (s.phase === "judging") {
-    h = soalBox + (sudah && sudah !== "(lisan)" ? msg("📨", `Jawaban terkirim: ${esc(sudah)}`, "Juri sedang menilai...") : msg("⚖️", "Juri sedang menilai..."));
+    h = soalBox + (sudah && sudah !== "(lisan)" ? msg("📨", `Jawaban terkirim: ${teks(sudah)}`, "Juri sedang menilai...") : msg("⚖️", "Juri sedang menilai..."));
   } else if (s.phase === "reveal") {
     const r = room.reveal?.results?.[me];
     const key = room.reveal?.key;
     let hasil;
     if (r && r.choice) hasil = r.correct
       ? msg("✅", `Benar! +${r.points}`, r.rank ? `Urutan benar ke-${r.rank}` : "")
-      : msg("❌", r.points < 0 ? `Salah (${r.points})` : "Salah", r.choice === "(lisan)" ? "" : `Jawaban Anda: ${esc(r.choice)}`);
+      : msg("❌", r.points < 0 ? `Salah (${r.points})` : "Salah", r.choice === "(lisan)" ? "" : `Jawaban Anda: ${teks(r.choice)}`);
     else if (s.session === 1 && s.turnTeam !== me) hasil = msg("📋", `Jawaban benar: ${key}`, esc(s.msg || ""));
     else hasil = msg("⌛", "Tidak menjawab", s.session === 3 ? "" : "Waktu habis");
-    h = hasil + `<div class="center"><span class="pill">Kunci: ${isian ? esc(key) : `${key} · ${esc(c[String(key).toLowerCase()] || "")}`}</span></div>`;
+    h = hasil + `<div class="center"><span class="pill">Kunci: ${isian ? teks(key) : `${key} · ${teks(c[String(key).toLowerCase()] || "")}`}</span></div>`;
   }
   const ketik = $("isianTxt")?.value || "";
   if (isPaused(s)) h = `<div class="jeda-banner">⏸ Waktu dijeda oleh juri</div><div class="dijeda">${h}</div>`;

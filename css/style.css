@@ -316,3 +316,27 @@ body.layar { background: radial-gradient(circle at 20% 10%, #127a4f, var(--hijau
 .ind-audio { display: inline-block; margin-top: 1.5vh; font-size: min(1.6vw, 2.8vh); background: var(--hijau-muda); color: var(--hijau-tua); padding: .6vh 1.2vw; border-radius: 999px; }
 .ind-audio.bunyi { background: var(--emas); color: #2b1d00; animation: kedip 1s ease-in-out infinite; }
 .hp-gambar { display: block; max-width: 100%; max-height: 220px; margin: .7rem auto 0; border-radius: 10px; }
+
+/* ================= Teks Arab ================= */
+.arab, .arab-penuh {
+  font-family: "Scheherazade New", "Amiri", "Noto Naskh Arabic", "Traditional Arabic", serif;
+  font-weight: 400; unicode-bidi: isolate; font-feature-settings: "kern", "liga", "calt";
+}
+.arab { font-size: 1.45em; line-height: 1.6; }
+.arab-penuh { display: block; direction: rtl; text-align: right; font-size: 1.5em; line-height: 1.9; }
+b .arab, b .arab-penuh, .juri-jawab .arab, .juri-jawab .arab-penuh { font-weight: 700; }
+.isi-opsi { flex: 1; min-width: 0; }
+.layar-soal .arab-penuh { font-size: 1.4em; line-height: 1.8; }
+.layar-opsi .arab-penuh, .layar-opsi .arab { font-size: 1.35em; line-height: 1.5; }
+.layar-kunci .arab, .layar-kunci .arab-penuh { font-size: 1.3em; }
+.layar-kunci .arab-penuh { text-align: center; }
+.hp-opsi .arab-penuh { font-size: 1.45em; line-height: 1.6; }
+input[dir="auto"], textarea[dir="auto"] { unicode-bidi: plaintext; }
+#isianTxt { font-family: "Plus Jakarta Sans", "Scheherazade New", system-ui, sans-serif; }
+
+/* teks soal: baris baru dari penulis soal tetap dihormati, spasi kode HTML diabaikan */
+.layar-soal, .hp-soal { white-space: normal; }
+.layar-soal .teks-soal, .hp-soal .teks-soal { white-space: pre-wrap; }
+.soal-preview .opsi div { display: flex; gap: .4rem; align-items: center; }
+.soal-preview .opsi .arab-penuh, .kunci-box .arab-penuh { flex: 1; font-size: 1.35em; line-height: 1.6; }
+.kunci-box b { display: inline-flex; gap: .4rem; align-items: center; flex-wrap: wrap; }

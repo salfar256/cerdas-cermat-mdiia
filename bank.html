@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bank Soal · Cerdas Cermat MDIIA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261128202713">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=20261128203410">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -67,20 +67,20 @@
             </div>
             <div><label>Tipe soal</label>
               <select id="qTipe"><option value="pg">Pilihan ganda (A–D, dinilai otomatis)</option><option value="isian">Isian singkat (diketik peserta, dinilai juri)</option><option value="lisan">Jawab lisan (diucapkan peserta, dinilai juri)</option></select></div>
-            <div><label>Pertanyaan</label><textarea id="qSoal" required></textarea></div>
+            <div><label>Pertanyaan</label><textarea id="qSoal" dir="auto" required></textarea></div>
             <div><label>Media <span class="muted small">(opsional: nama file gambar/audio di folder media, atau link https://)</span></label>
               <input type="text" id="qMedia" placeholder="mis. kh-hasyim-asyari.jpg atau abasa-ayat-4.mp3">
               <div id="mediaPrev" class="small" style="margin-top:.4rem"></div></div>
             <div class="grid two" id="pgWrap">
-              <div><label>A</label><input type="text" id="qA" required></div>
-              <div><label>B</label><input type="text" id="qB" required></div>
-              <div><label>C</label><input type="text" id="qC" required></div>
-              <div><label>D</label><input type="text" id="qD" required></div>
+              <div><label>A</label><input type="text" id="qA" dir="auto" required></div>
+              <div><label>B</label><input type="text" id="qB" dir="auto" required></div>
+              <div><label>C</label><input type="text" id="qC" dir="auto" required></div>
+              <div><label>D</label><input type="text" id="qD" dir="auto" required></div>
             </div>
             <div id="kunciPgWrap"><label>Kunci jawaban</label>
               <select id="qKunci"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>
             <div id="kunciIsianWrap" class="hidden"><label>Kunci jawaban (ditampilkan ke juri)</label>
-              <input type="text" id="qKunciIsian" placeholder="mis. KH. Hasyim Asy'ari"></div>
+              <input type="text" id="qKunciIsian" dir="auto" placeholder="mis. KH. Hasyim Asy'ari"></div>
             <div class="row">
               <button class="btn" id="simpan">Simpan</button>
               <button class="btn abu" type="button" id="batal">Kosongkan</button>
@@ -108,6 +108,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/bank.js?v=20261128202713"></script>
+  <script type="module" src="js/bank.js?v=20261128203410"></script>
 </body>
 </html>

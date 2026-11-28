@@ -6,7 +6,7 @@ import {
 import {
   getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261128202713";
+import { firebaseConfig } from "./firebase-config.js?v=20261128203410";
 
 export const CONFIG_OK = !String(firebaseConfig.apiKey || "").startsWith("ISI");
 if (!CONFIG_OK) {
@@ -155,4 +155,27 @@ export function mediaUrl(m) {
   if (/^https?:\/\//i.test(s) || s.includes("/")) return s;
   const j = mediaJenis(s);
   return j ? `media/${j}/${encodeURIComponent(s)}` : s;
+}
+
+// ---- Teks Arab ----
+// Potongan Arab dibungkus agar memakai font Arab, ukuran lebih besar, dan arah kanan-ke-kiri yang benar.
+const AR = "\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF";
+const RE_ADA_ARAB = new RegExp(`[${AR}]`);
+const RE_RUN_ARAB = new RegExp(`[${AR}](?:[${AR}\\s«»()\\[\\].!:\\-،؛؟]*[${AR}])?`, "g");
+const RE_HURUF_ARAB = new RegExp(`[${AR}]`, "g");
+export function adaArab(s) { return RE_ADA_ARAB.test(String(s ?? "")); }
+export function dominanArab(s) {
+  const t = String(s ?? "");
+  const ar = (t.match(RE_HURUF_ARAB) || []).length;
+  const lat = (t.match(/[A-Za-z]/g) || []).length;
+  return ar > 0 && (lat <= 2 || ar >= lat * 6);
+}
+// Mengubah teks menjadi HTML aman (escape) dengan penanda Arab.
+export function teks(s) {
+  const t = String(s ?? "");
+  if (!adaArab(t)) return esc(t);
+  if (dominanArab(t)) return `<span class="arab-penuh" dir="rtl">${esc(t)}</span>`;
+  let out = "", last = 0;
+  t.replace(RE_RUN_ARAB, (m, i) => { out += esc(t.slice(last, i)) + `<span class="arab" dir="rtl">${esc(m)}</span>`; last = i + m.length; return m; });
+  return out + esc(t.slice(last));
 }

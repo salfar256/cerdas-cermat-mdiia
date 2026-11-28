@@ -1,5 +1,5 @@
-import { db, ref, onValue, push, set, update, remove, esc, mediaJenis, mediaUrl } from "./common.js?v=20261128202713";
-import { requireAdmin, toast } from "./admin-auth.js?v=20261128202713";
+import { db, ref, onValue, push, set, update, remove, esc, teks, mediaJenis, mediaUrl } from "./common.js?v=20261128203410";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261128203410";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};
@@ -40,8 +40,8 @@ function renderList() {
     <tr>
       <td>${i + 1}</td>
       <td><span class="pill ${q.sesi == 3 ? "merah" : q.sesi == 2 ? "emas" : ""}">S${q.sesi}</span>${q.paket ? `<div class="small muted">${esc(q.paket)}</div>` : ""}</td>
-      <td>${q.tipe === "isian" ? `<span class="pill emas">Isian</span> ` : q.tipe === "lisan" ? `<span class="pill emas">Lisan</span> ` : ""}${q.media ? `<span class="pill">${mediaJenis(q.media) === "audio" ? "🔊" : "🖼️"} ${esc(q.media)}</span> ` : ""}${esc(q.soal)}${q.tipe === "isian" || q.tipe === "lisan" ? "" : `<div class="small muted">A. ${esc(q.a)} · B. ${esc(q.b)} · C. ${esc(q.c)} · D. ${esc(q.d)}</div>`}</td>
-      <td><b>${esc(q.kunci)}</b></td>
+      <td>${q.tipe === "isian" ? `<span class="pill emas">Isian</span> ` : q.tipe === "lisan" ? `<span class="pill emas">Lisan</span> ` : ""}${q.media ? `<span class="pill">${mediaJenis(q.media) === "audio" ? "🔊" : "🖼️"} ${esc(q.media)}</span> ` : ""}${teks(q.soal)}${q.tipe === "isian" || q.tipe === "lisan" ? "" : `<div class="small muted">A. ${teks(q.a)} · B. ${teks(q.b)} · C. ${teks(q.c)} · D. ${teks(q.d)}</div>`}</td>
+      <td><b>${teks(q.kunci)}</b></td>
       <td style="white-space:nowrap">
         <button class="btn abu kecil" data-edit="${q.id}">Ubah</button>
         <button class="btn merah kecil" data-del="${q.id}">Hapus</button>
