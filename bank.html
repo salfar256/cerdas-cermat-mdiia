@@ -7,7 +7,7 @@
   <title>Bank Soal · Cerdas Cermat MDIIA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261128170247">
+  <link rel="stylesheet" href="css/style.css?v=20261128202713">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -68,6 +68,9 @@
             <div><label>Tipe soal</label>
               <select id="qTipe"><option value="pg">Pilihan ganda (A–D, dinilai otomatis)</option><option value="isian">Isian singkat (diketik peserta, dinilai juri)</option><option value="lisan">Jawab lisan (diucapkan peserta, dinilai juri)</option></select></div>
             <div><label>Pertanyaan</label><textarea id="qSoal" required></textarea></div>
+            <div><label>Media <span class="muted small">(opsional: nama file gambar/audio di folder media, atau link https://)</span></label>
+              <input type="text" id="qMedia" placeholder="mis. kh-hasyim-asyari.jpg atau abasa-ayat-4.mp3">
+              <div id="mediaPrev" class="small" style="margin-top:.4rem"></div></div>
             <div class="grid two" id="pgWrap">
               <div><label>A</label><input type="text" id="qA" required></div>
               <div><label>B</label><input type="text" id="qB" required></div>
@@ -87,7 +90,7 @@
 
         <div class="card">
           <h2>Impor dari Excel / CSV</h2>
-          <p class="small muted">Kolom: <b>sesi, tipe, paket, soal, a, b, c, d, kunci</b>. Baris pertama judul kolom. Sesi: 1/2/3. Tipe: <b>pg</b>, <b>isian</b>, atau <b>lisan</b>. Untuk pg, kunci A/B/C/D. Untuk isian/lisan, kolom a–d dikosongkan dan kunci diisi teks jawabannya. Soal lisan hanya untuk sesi 1 dan 3.</p>
+          <p class="small muted">Kolom: <b>sesi, tipe, paket, soal, a, b, c, d, kunci, media</b>. Kolom media boleh kosong. Baris pertama judul kolom. Sesi: 1/2/3. Tipe: <b>pg</b>, <b>isian</b>, atau <b>lisan</b>. Untuk pg, kunci A/B/C/D. Untuk isian/lisan, kolom a–d dikosongkan dan kunci diisi teks jawabannya. Soal lisan hanya untuk sesi 1 dan 3.</p>
           <div class="row">
             <button class="btn garis kecil" id="tplXlsx">⬇ Template Excel</button>
             <button class="btn garis kecil" id="tplCsv">⬇ Template CSV</button>
@@ -105,6 +108,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/bank.js?v=20261128170247"></script>
+  <script type="module" src="js/bank.js?v=20261128202713"></script>
 </body>
 </html>

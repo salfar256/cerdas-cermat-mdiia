@@ -1,9 +1,9 @@
 import {
   auth, db, ref, onValue, get, set, update, remove, push, serverTimestamp, increment, signOut,
   serverNow, SESI_NAMA, SESI_PENDEK, TEAM_COLORS, TEAM_IDS, OPTIONS, DEFAULT_SETTINGS,
-  settingsOf, esc, teamList, secondsLeft, preloadSounds, unlockSounds, playSound, fmtScore
-} from "./common.js?v=20261128170247";
-import { requireAdmin, toast } from "./admin-auth.js?v=20261128170247";
+  settingsOf, esc, mediaJenis, mediaUrl, teamList, secondsLeft, preloadSounds, unlockSounds, playSound, fmtScore
+} from "./common.js?v=20261128202713";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261128202713";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};
@@ -167,15 +167,15 @@ const normSoal = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim(
 function soalUntukSesi(sesi) {
   const paket = room?.meta?.paket || "";
   const used = room?.used || {};
-  const usedText = new Set(Object.keys(used).map((id) => normSoal(bank[id]?.soal)).filter(Boolean));
+  const usedText = new Set(Object.keys(used).filter((id) => bank[id]).map((id) => normSoal(bank[id].soal) + "|" + (bank[id].media || "")));
   const seen = new Set();
   return Object.entries(bank)
     .filter(([, q]) => Number(q.sesi) === sesi && (!paket || (q.paket || "") === paket))
     .filter(([, q]) => !(sesi === 2 && q.tipe === "lisan"))   // sesi 2 tidak memakai soal lisan
     .sort((a, b) => (a[1].dibuat || 0) - (b[1].dibuat || 0))
     .map(([id, q]) => ({ id, ...q }))
-    .filter((q) => { const k = normSoal(q.soal); if (seen.has(k)) return false; seen.add(k); return true; })
-    .map((q) => ({ ...q, used: !!used[q.id] || usedText.has(normSoal(q.soal)) }));
+    .filter((q) => { const k = normSoal(q.soal) + "|" + (q.media || ""); if (seen.has(k)) return false; seen.add(k); return true; })
+    .map((q) => ({ ...q, used: !!used[q.id] || usedText.has(normSoal(q.soal) + "|" + (q.media || "")) }));
 }
 
 function renderPilihSoal() {
@@ -188,7 +188,7 @@ function renderPilihSoal() {
   const cur = $("pilihSoal").value;
   const dipakai = list.length - unused.length;
   $("pilihSoal").innerHTML = unused.length
-    ? `<optgroup label="Sisa ${unused.length} soal · ${dipakai} sudah dipakai">${unused.map((q, i) => `<option value="${q.id}">${i + 1}. ${esc((q.soal || "").slice(0, 90))}</option>`).join("")}</optgroup>`
+    ? `<optgroup label="Sisa ${unused.length} soal · ${dipakai} sudah dipakai">${unused.map((q, i) => `<option value="${q.id}">${i + 1}. ${q.media ? (mediaJenis(q.media) === "audio" ? "🔊 " : "🖼️ ") : ""}${esc((q.soal || "").slice(0, 90))}</option>`).join("")}</optgroup>`
     : `<option value="">${list.length ? `— Semua ${list.length} soal sesi ini sudah dipakai —` : "— Belum ada soal untuk sesi ini —"}</option>`;
   if (cur && unused.some((q) => q.id === cur)) $("pilihSoal").value = cur;
   else if (unused[0]) $("pilihSoal").value = unused[0].id;
@@ -225,20 +225,23 @@ $("btnMulai").onclick = async () => {
   const st = settingsOf(room);
   const n = (room.meta?.count?.["s" + sesi] || 0) + 1;
   const teams = teamList(room);
+  // soal ber-audio: waktu menjawab / jeda buzzer ditambah sepanjang audio agar adil
+  $("btnMulai").disabled = true;          // cegah klik ganda selama memeriksa audio
+  const durAudio = await durasiAudio(q.media).finally(() => { $("btnMulai").disabled = false; });
   const state = { session: sesi, qid, number: n, runId: push(ref(db, "x")).key, openedAt: serverTimestamp(), buzzKey: "b1", msg: "" };
   const upd = {};
   if (sesi === 1) {
     const turn = $("pilihGiliran").value || teams[0].id;
     const ke = (room.meta?.s1count?.[turn] || 0) + 1;
-    state.phase = "open"; state.turnTeam = turn; state.endsAt = serverNow() + st.s1Time * 1000;
+    state.phase = "open"; state.turnTeam = turn; state.endsAt = serverNow() + (st.s1Time + durAudio) * 1000;
     state.msg = `Giliran ${room.teams[turn].name} · soal ke-${ke} dari ${st.s1PerTeam}`;
     upd[`meta/s1count/${turn}`] = ke;
     $("pilihGiliran").dataset.auto = "1";
   } else if (sesi === 2) {
-    state.phase = "open"; state.endsAt = serverNow() + st.s2Time * 1000;
+    state.phase = "open"; state.endsAt = serverNow() + (st.s2Time + durAudio) * 1000;
     state.msg = "Semua kelompok jawab secepatnya!";
   } else {
-    state.phase = "ready"; state.endsAt = serverNow() + st.s3Delay * 1000;
+    state.phase = "ready"; state.endsAt = serverNow() + Math.max(st.s3Delay, durAudio + 1) * 1000;
     state.msg = "Baca soal... buzzer segera dibuka";
   }
   if (st.hitungMundur > 0) {
@@ -250,9 +253,12 @@ $("btnMulai").onclick = async () => {
   }
   Object.assign(upd, {
     state,
-    current: isIsian(q)
-      ? { qid, soal: q.soal, tipe: q.tipe, session: sesi, number: n }
-      : { qid, soal: q.soal, tipe: "pg", a: q.a, b: q.b, c: q.c, d: q.d, session: sesi, number: n },
+    current: {
+      ...(isIsian(q)
+        ? { qid, soal: q.soal, tipe: q.tipe, session: sesi, number: n }
+        : { qid, soal: q.soal, tipe: "pg", a: q.a, b: q.b, c: q.c, d: q.d, session: sesi, number: n }),
+      ...(q.media ? { media: q.media } : {})
+    },
     [`judge/${qid}`]: null,
     reveal: null,
     [`private/${qid}`]: q.kunci,
@@ -280,6 +286,20 @@ $("btnJeda").onclick = async () => {
     await update(R(), upd);
   }
 };
+
+// Durasi audio soal (detik, dibulatkan ke atas); 0 jika bukan audio / gagal dimuat.
+function durasiAudio(media) {
+  if (mediaJenis(media) !== "audio") return Promise.resolve(0);
+  return new Promise((res) => {
+    const a = new Audio(); let selesai = false;
+    const done = (v) => { if (!selesai) { selesai = true; res(v); } };
+    a.preload = "metadata";
+    a.onloadedmetadata = () => done(isFinite(a.duration) ? Math.ceil(a.duration) : 0);
+    a.onerror = () => done(0);
+    setTimeout(() => done(0), 4000);
+    a.src = mediaUrl(media);
+  });
+}
 
 $("btnTutup").onclick = async () => {
   const s = S();
@@ -563,16 +583,23 @@ function renderStatus() {
     ${esc(FASE[s.phase] || s.phase)}${sisa}${extra}${s.msg ? `<div class="small" style="font-weight:500;margin-top:.2rem">${esc(s.msg)}</div>` : ""}`;
 }
 
+// hanya ganti isi pratinjau jika berubah (agar pemutar audio juri tidak terulang)
+let lastPreview = "";
+function setPreview(html) { if (html !== lastPreview) { lastPreview = html; $("preview").innerHTML = html; } }
+
 function renderPreview() {
   const c = room.current, s = S();
-  if (!c) { $("preview").innerHTML = `<span class="muted">Belum ada soal yang ditampilkan.</span>`; $("hasil").innerHTML = ""; $("juri").innerHTML = ""; return; }
+  if (!c) { setPreview(`<span class="muted">Belum ada soal yang ditampilkan.</span>`); $("hasil").innerHTML = ""; $("juri").innerHTML = ""; return; }
   const key = keyOf(c.qid);
   const isian = dinilaiJuri(c);
-  $("preview").innerHTML = `<div class="row between"><span class="small muted">Soal tampil · no. ${c.number}</span>
+  setPreview(`<div class="row between"><span class="small muted">Soal tampil · no. ${c.number}</span>
       <span class="pill ${isian ? "emas" : ""}">${TIPE_LABEL[c.tipe] || "Pilihan ganda"}</span></div>
     <div style="font-weight:700;white-space:pre-wrap;font-size:1.05rem;margin-top:.3rem">${esc(c.soal)}</div>
+    ${c.media ? (mediaJenis(c.media) === "audio"
+      ? `<div class="row" style="margin-top:.5rem"><span class="pill">🔊 ${esc(c.media)}</span><button class="btn biru kecil" id="putarAudio">▶ Putar audio di layar</button><span class="small muted">Pratinjau juri:</span><audio controls preload="none" src="${esc(mediaUrl(c.media))}" style="height:32px"></audio></div>`
+      : `<img src="${esc(mediaUrl(c.media))}" style="max-height:160px;margin-top:.5rem;border-radius:8px;border:1px solid var(--garis)">`) : ""}
     ${isian ? "" : `<div class="opsi">${OPTIONS.map((o) => `<div class="${o === key ? "kunci" : ""}">${o}. ${esc(c[o.toLowerCase()])}</div>`).join("")}</div>`}
-    <div class="kunci-box">🔑 Kunci jawaban: <b>${esc(isian ? key : `${key}. ${c[String(key).toLowerCase()] || ""}`)}</b></div>`;
+    <div class="kunci-box">🔑 Kunci jawaban: <b>${esc(isian ? key : `${key}. ${c[String(key).toLowerCase()] || ""}`)}</b></div>`);
   const ans = room.answers?.[c.qid] || {};
   const res = room.reveal?.results || {};
   const rows = teamList(room).map((t) => {
@@ -615,6 +642,11 @@ function renderJuri(c, s, ans) {
       <button class="btn emas besar" data-umumkan="1" style="margin-top:.6rem" ${s.phase === "judging" ? "" : "disabled"}>📢 Umumkan hasil</button></div>`;
   } else el.innerHTML = "";
 }
+
+// Putar ulang audio soal di layar proyektor
+$("preview").addEventListener("click", (e) => {
+  if (e.target.id === "putarAudio") update(R(), { "state/audioPlay": Date.now() });
+});
 
 $("juri").onclick = async (e) => {
   const d = e.target.closest("button")?.dataset;

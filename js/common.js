@@ -6,7 +6,7 @@ import {
 import {
   getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261128170247";
+import { firebaseConfig } from "./firebase-config.js?v=20261128202713";
 
 export const CONFIG_OK = !String(firebaseConfig.apiKey || "").startsWith("ISI");
 if (!CONFIG_OK) {
@@ -136,4 +136,23 @@ export function watchPublicRoom(code, cb) {
 
 export function fmtScore(n) {
   return (n || 0).toLocaleString("id-ID");
+}
+
+// ---- Media soal (gambar / audio) ----
+// Kolom media berisi nama file di folder media/gambar atau media/audio repo,
+// atau link lengkap (https://...).
+const EXT_GAMBAR = /\.(jpe?g|png|gif|webp|svg)(\?.*)?$/i;
+const EXT_AUDIO = /\.(mp3|m4a|ogg|wav|aac)(\?.*)?$/i;
+export function mediaJenis(m) {
+  if (!m) return null;
+  if (EXT_GAMBAR.test(m)) return "gambar";
+  if (EXT_AUDIO.test(m)) return "audio";
+  return null;
+}
+export function mediaUrl(m) {
+  if (!m) return "";
+  const s = String(m).trim();
+  if (/^https?:\/\//i.test(s) || s.includes("/")) return s;
+  const j = mediaJenis(s);
+  return j ? `media/${j}/${encodeURIComponent(s)}` : s;
 }

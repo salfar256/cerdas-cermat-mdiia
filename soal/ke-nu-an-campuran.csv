@@ -1,31 +1,34 @@
-﻿sesi,tipe,paket,soal,a,b,c,d,kunci
-1,pg,Ke-NU-an Campuran,"Nahdlatul Ulama didirikan pada tanggal 16 Rajab 1344 H, bertepatan dengan tanggal...",17 Agustus 1926,1 Maret 1926,22 Oktober 1926,31 Januari 1926,D
-1,isian,Ke-NU-an Campuran,Di kota manakah Nahdlatul Ulama didirikan?,,,,,Surabaya
-1,lisan,Ke-NU-an Campuran,Ulama yang menjabat Rais Akbar pertama Nahdlatul Ulama adalah...,,,,,KH. Hasyim Asy'ari
-1,pg,Ke-NU-an Campuran,Tokoh muda penggerak berdirinya NU yang juga menggubah lagu Ya Lal Wathon adalah...,KH. Mahfudz Shiddiq,KH. Abdul Wahab Hasbullah,KH. Ridwan Abdullah,KH. Idham Chalid,B
-1,isian,Ke-NU-an Campuran,Lambang NU dirancang oleh...,,,,,KH. Ridwan Abdullah
-1,pg,Ke-NU-an Campuran,Jumlah seluruh bintang pada lambang Nahdlatul Ulama adalah...,9 bintang,7 bintang,5 bintang,11 bintang,A
-1,isian,Ke-NU-an Campuran,Satu bintang besar di bagian atas lambang NU melambangkan...,,,,,Nabi Muhammad SAW
-1,lisan,Ke-NU-an Campuran,"Ikatan pada tali yang melingkari bola dunia di lambang NU berjumlah 99, melambangkan...",,,,,Asmaul Husna
-1,pg,Ke-NU-an Campuran,Warna dasar lambang Nahdlatul Ulama adalah...,Merah,Biru,Hijau,Putih,C
-1,isian,Ke-NU-an Campuran,Pondok pesantren yang didirikan KH. Hasyim Asy'ari di Jombang adalah...,,,,,Tebuireng
-1,pg,Ke-NU-an Campuran,Kitab karya KH. Hasyim Asy'ari tentang adab guru dan murid adalah...,Safinatun Najah,Bidayatul Hidayah,Ta'limul Muta'allim,Adabul 'Alim wal Muta'allim,D
-1,isian,Ke-NU-an Campuran,"Dalam akidah, warga NU mengikuti paham Imam Abu Hasan al-Asy'ari dan Imam...",,,,,Abu Manshur al-Maturidi
-1,lisan,Ke-NU-an Campuran,"Dalam bidang tasawuf, NU mengikuti Imam al-Junaid al-Baghdadi dan Imam...",,,,,Al-Ghazali
-1,pg,Ke-NU-an Campuran,"Dalam bidang fiqih, NU mengikuti salah satu dari...",Tiga madzhab,Lima madzhab,Dua madzhab,Empat madzhab,D
-1,isian,Ke-NU-an Campuran,"Sikap tengah-tengah, tidak ekstrem kanan maupun kiri, dalam prinsip NU disebut...",,,,,Tawassuth
-1,pg,Ke-NU-an Campuran,Sikap toleran dan menghargai perbedaan dalam prinsip NU disebut...,Istiqamah,Tasamuh,Ta'awun,Tawassuth,B
-1,isian,Ke-NU-an Campuran,Badan otonom NU untuk kaum ibu adalah...,,,,,Muslimat NU
-1,lisan,Ke-NU-an Campuran,Badan otonom NU untuk pelajar putra adalah...,,,,,IPNU
-1,pg,Ke-NU-an Campuran,Barisan Ansor Serbaguna (Banser) merupakan bagian dari badan otonom...,IPNU,Muslimat NU,GP Ansor,Pagar Nusa,C
-1,isian,Ke-NU-an Campuran,Peringatan Hari Santri Nasional setiap 22 Oktober berawal dari peristiwa...,,,,,Resolusi Jihad
-2,pg,Ke-NU-an Campuran,"Dalam struktur NU, lembaga yang dipimpin ulama dan menjadi pimpinan tertinggi disebut...",A'wan,Mustasyar,Tanfidziyah,Syuriyah,D
-2,isian,Ke-NU-an Campuran,Kepengurusan NU di tingkat kabupaten/kota disebut...,,,,,PCNU
-2,pg,Ke-NU-an Campuran,Kepengurusan NU di tingkat kecamatan disebut...,Ranting NU,PCNU,MWCNU,PWNU,C
-2,isian,Ke-NU-an Campuran,Lembaga NU yang mengurusi bidang pendidikan sekolah dan madrasah adalah...,,,,,LP Ma'arif NU
-2,pg,Ke-NU-an Campuran,Forum NU untuk membahas dan memutuskan hukum atas masalah keagamaan aktual disebut...,Musyawarah Kerja,Halaqah Tahlil,Istighosah,Bahtsul Masail,D
-3,pg,Ke-NU-an Campuran,Panitia yang dibentuk para ulama pesantren sebelum NU berdiri untuk menyampaikan aspirasi kepada Raja Arab Saudi disebut...,Nahdlatut Tujjar,Syubbanul Wathan,Komite Hijaz,Taswirul Afkar,C
-3,lisan,Ke-NU-an Campuran,Keputusan NU untuk kembali ke Khittah 1926 ditetapkan pada Muktamar ke-27 tahun 1984 di...,,,,,Situbondo
-3,isian,Ke-NU-an Campuran,"Lima prinsip Mabadi Khaira Ummah adalah as-Shidqu, al-Amanah wal Wafa bil 'Ahd, al-'Adalah, at-Ta'awun, dan...",,,,,Al-Istiqamah
-3,lisan,Ke-NU-an Campuran,"Tiga ukhuwah yang dikembangkan NU adalah ukhuwah Islamiyah, ukhuwah Basyariyah, dan ukhuwah...",,,,,Wathaniyah
-3,pg,Ke-NU-an Campuran,Ketua Umum PBNU tahun 1984–1999 yang kemudian menjadi Presiden ke-4 Republik Indonesia adalah...,KH. Idham Chalid,KH. Hasyim Muzadi,KH. Said Aqil Siroj,KH. Abdurrahman Wahid,D
+﻿sesi,tipe,paket,soal,a,b,c,d,kunci,media
+1,pg,Ke-NU-an Campuran,"Nahdlatul Ulama didirikan pada tanggal 16 Rajab 1344 H, bertepatan dengan tanggal...",17 Agustus 1926,1 Maret 1926,22 Oktober 1926,31 Januari 1926,D,
+1,isian,Ke-NU-an Campuran,Di kota manakah Nahdlatul Ulama didirikan?,,,,,Surabaya,
+1,lisan,Ke-NU-an Campuran,Ulama yang menjabat Rais Akbar pertama Nahdlatul Ulama adalah...,,,,,KH. Hasyim Asy'ari,
+1,pg,Ke-NU-an Campuran,Tokoh muda penggerak berdirinya NU yang juga menggubah lagu Ya Lal Wathon adalah...,KH. Mahfudz Shiddiq,KH. Abdul Wahab Hasbullah,KH. Ridwan Abdullah,KH. Idham Chalid,B,
+1,isian,Ke-NU-an Campuran,Lambang NU dirancang oleh...,,,,,KH. Ridwan Abdullah,
+1,pg,Ke-NU-an Campuran,Jumlah seluruh bintang pada lambang Nahdlatul Ulama adalah...,9 bintang,7 bintang,5 bintang,11 bintang,A,
+1,isian,Ke-NU-an Campuran,Satu bintang besar di bagian atas lambang NU melambangkan...,,,,,Nabi Muhammad SAW,
+1,lisan,Ke-NU-an Campuran,"Ikatan pada tali yang melingkari bola dunia di lambang NU berjumlah 99, melambangkan...",,,,,Asmaul Husna,
+1,pg,Ke-NU-an Campuran,Warna dasar lambang Nahdlatul Ulama adalah...,Merah,Biru,Hijau,Putih,C,
+1,isian,Ke-NU-an Campuran,Pondok pesantren yang didirikan KH. Hasyim Asy'ari di Jombang adalah...,,,,,Tebuireng,
+1,pg,Ke-NU-an Campuran,Kitab karya KH. Hasyim Asy'ari tentang adab guru dan murid adalah...,Safinatun Najah,Bidayatul Hidayah,Ta'limul Muta'allim,Adabul 'Alim wal Muta'allim,D,
+1,isian,Ke-NU-an Campuran,"Dalam akidah, warga NU mengikuti paham Imam Abu Hasan al-Asy'ari dan Imam...",,,,,Abu Manshur al-Maturidi,
+1,lisan,Ke-NU-an Campuran,"Dalam bidang tasawuf, NU mengikuti Imam al-Junaid al-Baghdadi dan Imam...",,,,,Al-Ghazali,
+1,pg,Ke-NU-an Campuran,"Dalam bidang fiqih, NU mengikuti salah satu dari...",Tiga madzhab,Lima madzhab,Dua madzhab,Empat madzhab,D,
+1,isian,Ke-NU-an Campuran,"Sikap tengah-tengah, tidak ekstrem kanan maupun kiri, dalam prinsip NU disebut...",,,,,Tawassuth,
+1,pg,Ke-NU-an Campuran,Sikap toleran dan menghargai perbedaan dalam prinsip NU disebut...,Istiqamah,Tasamuh,Ta'awun,Tawassuth,B,
+1,isian,Ke-NU-an Campuran,Badan otonom NU untuk kaum ibu adalah...,,,,,Muslimat NU,
+1,lisan,Ke-NU-an Campuran,Badan otonom NU untuk pelajar putra adalah...,,,,,IPNU,
+1,pg,Ke-NU-an Campuran,Barisan Ansor Serbaguna (Banser) merupakan bagian dari badan otonom...,IPNU,Muslimat NU,GP Ansor,Pagar Nusa,C,
+1,isian,Ke-NU-an Campuran,Peringatan Hari Santri Nasional setiap 22 Oktober berawal dari peristiwa...,,,,,Resolusi Jihad,
+2,pg,Ke-NU-an Campuran,Siapakah tokoh pendiri NU pada gambar ini?,KH. Hasyim Asy'ari,KH. Abdul Wahab Hasbullah,KH. Bisri Syansuri,KH. Ridwan Abdullah,B,kh-wahab-chasbullah.jpg
+2,pg,Ke-NU-an Campuran,"Dalam struktur NU, lembaga yang dipimpin ulama dan menjadi pimpinan tertinggi disebut...",A'wan,Mustasyar,Tanfidziyah,Syuriyah,D,
+2,isian,Ke-NU-an Campuran,Kepengurusan NU di tingkat kabupaten/kota disebut...,,,,,PCNU,
+2,pg,Ke-NU-an Campuran,Kepengurusan NU di tingkat kecamatan disebut...,Ranting NU,PCNU,MWCNU,PWNU,C,
+2,isian,Ke-NU-an Campuran,Lembaga NU yang mengurusi bidang pendidikan sekolah dan madrasah adalah...,,,,,LP Ma'arif NU,
+2,pg,Ke-NU-an Campuran,Forum NU untuk membahas dan memutuskan hukum atas masalah keagamaan aktual disebut...,Musyawarah Kerja,Halaqah Tahlil,Istighosah,Bahtsul Masail,D,
+3,isian,Ke-NU-an Campuran,Siapakah ulama pendiri NU pada gambar ini?,,,,,"KH. Hasyim Asy'ari (Hadratussyaikh, Rais Akbar NU)",kh-hasyim-asyari.jpg
+3,lisan,Ke-NU-an Campuran,"Dengarkan bacaan ayat berikut, lalu lanjutkan satu ayat sesudahnya!",,,,,أَمَّا مَنِ اسْتَغْنَىٰ (Ammā manistaghnā) — QS. 'Abasa: 5,abasa-ayat-4.mp3
+3,pg,Ke-NU-an Campuran,Panitia yang dibentuk para ulama pesantren sebelum NU berdiri untuk menyampaikan aspirasi kepada Raja Arab Saudi disebut...,Nahdlatut Tujjar,Syubbanul Wathan,Komite Hijaz,Taswirul Afkar,C,
+3,lisan,Ke-NU-an Campuran,Keputusan NU untuk kembali ke Khittah 1926 ditetapkan pada Muktamar ke-27 tahun 1984 di...,,,,,Situbondo,
+3,isian,Ke-NU-an Campuran,"Lima prinsip Mabadi Khaira Ummah adalah as-Shidqu, al-Amanah wal Wafa bil 'Ahd, al-'Adalah, at-Ta'awun, dan...",,,,,Al-Istiqamah,
+3,lisan,Ke-NU-an Campuran,"Tiga ukhuwah yang dikembangkan NU adalah ukhuwah Islamiyah, ukhuwah Basyariyah, dan ukhuwah...",,,,,Wathaniyah,
+3,pg,Ke-NU-an Campuran,Ketua Umum PBNU tahun 1984–1999 yang kemudian menjadi Presiden ke-4 Republik Indonesia adalah...,KH. Idham Chalid,KH. Hasyim Muzadi,KH. Said Aqil Siroj,KH. Abdurrahman Wahid,D,

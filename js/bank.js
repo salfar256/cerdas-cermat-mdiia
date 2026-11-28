@@ -1,5 +1,5 @@
-import { db, ref, onValue, push, set, update, remove, esc } from "./common.js?v=20261128170247";
-import { requireAdmin, toast } from "./admin-auth.js?v=20261128170247";
+import { db, ref, onValue, push, set, update, remove, esc, mediaJenis, mediaUrl } from "./common.js?v=20261128202713";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261128202713";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};
@@ -40,7 +40,7 @@ function renderList() {
     <tr>
       <td>${i + 1}</td>
       <td><span class="pill ${q.sesi == 3 ? "merah" : q.sesi == 2 ? "emas" : ""}">S${q.sesi}</span>${q.paket ? `<div class="small muted">${esc(q.paket)}</div>` : ""}</td>
-      <td>${q.tipe === "isian" ? `<span class="pill emas">Isian</span> ` : q.tipe === "lisan" ? `<span class="pill emas">Lisan</span> ` : ""}${esc(q.soal)}${q.tipe === "isian" || q.tipe === "lisan" ? "" : `<div class="small muted">A. ${esc(q.a)} · B. ${esc(q.b)} · C. ${esc(q.c)} · D. ${esc(q.d)}</div>`}</td>
+      <td>${q.tipe === "isian" ? `<span class="pill emas">Isian</span> ` : q.tipe === "lisan" ? `<span class="pill emas">Lisan</span> ` : ""}${q.media ? `<span class="pill">${mediaJenis(q.media) === "audio" ? "🔊" : "🖼️"} ${esc(q.media)}</span> ` : ""}${esc(q.soal)}${q.tipe === "isian" || q.tipe === "lisan" ? "" : `<div class="small muted">A. ${esc(q.a)} · B. ${esc(q.b)} · C. ${esc(q.c)} · D. ${esc(q.d)}</div>`}</td>
       <td><b>${esc(q.kunci)}</b></td>
       <td style="white-space:nowrap">
         <button class="btn abu kecil" data-edit="${q.id}">Ubah</button>
@@ -58,6 +58,7 @@ $("tbody").onclick = async (e) => {
     const q = bank[ed];
     $("qId").value = ed; $("qSesi").value = q.sesi; $("qPaket").value = q.paket || "";
     $("qTipe").value = q.tipe || "pg"; setTipe();
+    $("qMedia").value = q.media || ""; previewMedia();
     $("qSoal").value = q.soal; $("qA").value = q.a || ""; $("qB").value = q.b || ""; $("qC").value = q.c || ""; $("qD").value = q.d || "";
     if (q.tipe === "isian" || q.tipe === "lisan") $("qKunciIsian").value = q.kunci; else $("qKunci").value = q.kunci; $("formJudul").textContent = "Ubah Soal";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -78,8 +79,17 @@ $("qTipe").onchange = setTipe;
 function resetForm() {
   const tp = $("qTipe").value;
   $("form").reset(); $("qId").value = ""; $("formJudul").textContent = "Tambah Soal";
-  $("qTipe").value = tp; setTipe();
+  $("qTipe").value = tp; setTipe(); previewMedia();
 }
+
+function previewMedia() {
+  const m = $("qMedia").value.trim(), j = mediaJenis(m), url = mediaUrl(m);
+  $("mediaPrev").innerHTML = !m ? "" : j === "gambar"
+    ? `<img src="${esc(url)}" style="max-height:140px;border-radius:8px;border:1px solid var(--garis)" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'⚠️ Gambar tidak ditemukan: ${esc(url)}',style:'color:var(--merah)'}))">`
+    : j === "audio" ? `<audio controls src="${esc(url)}" style="width:100%"></audio>`
+    : `<span style="color:var(--merah)">⚠️ Jenis file tidak dikenali. Gunakan .jpg/.png/.webp atau .mp3/.m4a</span>`;
+}
+$("qMedia").onchange = previewMedia;
 $("batal").onclick = resetForm;
 
 $("form").onsubmit = async (e) => {
@@ -91,10 +101,10 @@ $("form").onsubmit = async (e) => {
   }
   const data = isian
     ? { sesi: Number($("qSesi").value), tipe: $("qTipe").value, paket: $("qPaket").value.trim(), soal: $("qSoal").value.trim(),
-        a: null, b: null, c: null, d: null, kunci: $("qKunciIsian").value.trim() }
+        a: null, b: null, c: null, d: null, kunci: $("qKunciIsian").value.trim(), media: $("qMedia").value.trim() || null }
     : { sesi: Number($("qSesi").value), tipe: "pg", paket: $("qPaket").value.trim(),
         soal: $("qSoal").value.trim(), a: $("qA").value.trim(), b: $("qB").value.trim(),
-        c: $("qC").value.trim(), d: $("qD").value.trim(), kunci: $("qKunci").value };
+        c: $("qC").value.trim(), d: $("qD").value.trim(), kunci: $("qKunci").value, media: $("qMedia").value.trim() || null };
   const id = $("qId").value;
   if (id) { await update(ref(db, `bank/${id}`), data); toast("Soal diperbarui"); }
   else { await set(push(ref(db, "bank")), { ...data, dibuat: Date.now() }); toast("Soal ditambahkan"); }
@@ -111,14 +121,13 @@ $("hapusFilter").onclick = async () => {
 };
 
 // ---------- Template & ekspor ----------
-const HEADER = ["sesi", "tipe", "paket", "soal", "a", "b", "c", "d", "kunci"];
+const HEADER = ["sesi", "tipe", "paket", "soal", "a", "b", "c", "d", "kunci", "media"];
 const CONTOH = [
-  [1, "pg", "Babak 1", "Siapa pengarang kitab Alfiyah?", "Imam Nawawi", "Ibnu Malik", "Imam Ghazali", "Ibnu Hajar", "B"],
-  [1, "isian", "Babak 1", "Di kota manakah Nahdlatul Ulama didirikan?", "", "", "", "", "Surabaya"],
-  [2, "pg", "Babak 1", "Berapakah hasil 12 x 12?", "124", "144", "142", "132", "B"],
-  [3, "isian", "Babak 1", "Ibu kota Provinsi Jawa Barat adalah...", "", "", "", "", "Bandung"],
-  [3, "lisan", "Babak 1", "Sebutkan nama pendiri Pondok Pesantren Tebuireng!", "", "", "", "", "KH. Hasyim Asy'ari"]
-]
+  [1, "pg", "Babak 1", "Siapa pengarang kitab Alfiyah?", "Imam Nawawi", "Ibnu Malik", "Imam Ghazali", "Ibnu Hajar", "B", ""],
+  [1, "isian", "Babak 1", "Siapakah tokoh pada gambar ini?", "", "", "", "", "KH. Hasyim Asy'ari", "kh-hasyim-asyari.jpg"],
+  [2, "pg", "Babak 1", "Berapakah hasil 12 x 12?", "124", "144", "142", "132", "B", ""],
+  [3, "lisan", "Babak 1", "Dengarkan bacaan berikut, lalu lanjutkan ayat sesudahnya!", "", "", "", "", "Abasa ayat 5", "abasa-ayat-4.mp3"]
+];
 function download(name, blob) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -131,12 +140,12 @@ function toCsv(rows) {
 $("tplCsv").onclick = () => download("template-soal.csv", new Blob(["﻿" + toCsv([HEADER, ...CONTOH])], { type: "text/csv" }));
 $("tplXlsx").onclick = () => {
   const ws = XLSX.utils.aoa_to_sheet([HEADER, ...CONTOH]);
-  ws["!cols"] = [{ wch: 6 }, { wch: 7 }, { wch: 12 }, { wch: 50 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 7 }];
+  ws["!cols"] = [{ wch: 6 }, { wch: 7 }, { wch: 12 }, { wch: 50 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 7 }, { wch: 24 }];
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Soal");
   XLSX.writeFile(wb, "template-soal.xlsx");
 };
 $("ekspor").onclick = () => {
-  const rows = items().map((q) => [q.sesi, q.tipe || "pg", q.paket || "", q.soal, q.a || "", q.b || "", q.c || "", q.d || "", q.kunci]);
+  const rows = items().map((q) => [q.sesi, q.tipe || "pg", q.paket || "", q.soal, q.a || "", q.b || "", q.c || "", q.d || "", q.kunci, q.media || ""]);
   const ws = XLSX.utils.aoa_to_sheet([HEADER, ...rows]);
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Soal");
   XLSX.writeFile(wb, "bank-soal-cerdas-cermat.xlsx");
@@ -152,7 +161,8 @@ const ALIAS = {
   c: ["c", "opsi c", "pilihan c", "opsic"],
   d: ["d", "opsi d", "pilihan d", "opsid"],
   kunci: ["kunci", "jawaban", "kunci jawaban", "answer"],
-  tipe: ["tipe", "jenis", "tipe soal", "jenis soal"]
+  tipe: ["tipe", "jenis", "tipe soal", "jenis soal"],
+  media: ["media", "gambar", "audio", "file media", "file"]
 };
 function normKey(k) { return String(k).toLowerCase().replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
 
@@ -179,8 +189,8 @@ function parseWorkbook(wb) {
     if (lisan && sesi === 2) errs.push("soal lisan tidak dipakai di sesi 2");
     if (!m.soal && !m.a && !m.sesi) return; // baris kosong
     if (errs.length) bad.push(`Baris ${i + 2}: ${errs.join(", ")}`);
-    else if (isian) ok.push({ sesi, tipe: lisan ? "lisan" : "isian", paket: m.paket || "", soal: m.soal, kunci });
-    else ok.push({ sesi, tipe: "pg", paket: m.paket || "", soal: m.soal, a: m.a, b: m.b, c: m.c, d: m.d, kunci });
+    else if (isian) ok.push({ sesi, tipe: lisan ? "lisan" : "isian", paket: m.paket || "", soal: m.soal, kunci, ...(m.media ? { media: m.media } : {}) });
+    else ok.push({ sesi, tipe: "pg", paket: m.paket || "", soal: m.soal, a: m.a, b: m.b, c: m.c, d: m.d, kunci, ...(m.media ? { media: m.media } : {}) });
   });
   return { ok, bad };
 }

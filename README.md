@@ -69,13 +69,25 @@ Repositori → **Settings → Pages** → *Source: Deploy from a branch* → Bra
 
 Tips: pakai satu WiFi yang sama untuk semua HP agar adu cepat lebih adil. Jika HP kelompok mati/ganti, tekan **Lepas HP** di operator lalu masuk ulang.
 
+## Soal bergambar & audio
+
+Simpan file di repo ini:
+- gambar → `media/gambar/` (jpg, png, webp; usahakan < 500 KB)
+- audio → `media/audio/` (mp3, m4a; usahakan < 2 MB)
+
+Unggah lewat GitHub: buka folder → **Add file → Upload files** → Commit. Lalu di Bank Soal isi kolom **Media** dengan nama filenya saja (mis. `kh-hasyim-asyari.jpg`), atau link lengkap `https://...`.
+
+- Gambar tampil di layar proyektor (di samping soal) dan di HP peserta.
+- Audio diputar otomatis di layar proyektor sekali saat soal tampil; musik latar berhenti selama audio berbunyi. Operator bisa menekan **▶ Putar audio di layar** untuk mengulang. Waktu menjawab (sesi 1 & 2) dan jeda sebelum buzzer (sesi 3) otomatis ditambah sepanjang durasi audio.
+
 ## Format impor soal
 
-Kolom (baris pertama judul): `sesi, tipe, paket, soal, a, b, c, d, kunci`
+Kolom (baris pertama judul): `sesi, tipe, paket, soal, a, b, c, d, kunci, media`
 - `sesi`: 1, 2, atau 3
 - `tipe`: `pg`, `isian`, atau `lisan` (untuk isian/lisan, kolom a–d dikosongkan dan `kunci` diisi teks jawaban)
 - `paket`: opsional (mis. "Babak Final"). Ruang lomba bisa dibatasi ke satu paket.
 - `kunci`: A/B/C/D untuk pg, teks jawaban untuk isian/lisan
+- `media`: opsional, nama file di folder `media/` atau link https://
 
 Contoh ada di `template-soal.csv`, atau unduh template Excel dari halaman Bank Soal.
 

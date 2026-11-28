@@ -1,7 +1,7 @@
 import {
   ensureAnon, watchPublicRoom, SESI_NAMA, SESI_PENDEK, OPTIONS, esc, teamList, sortedTeams, secondsLeft,
-  isPaused, getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
-} from "./common.js?v=20261128170247";
+  isPaused, mediaJenis, mediaUrl, getParam, preloadSounds, unlockSounds, playSound, fmtScore, settingsOf
+} from "./common.js?v=20261128202713";
 
 const $ = (id) => document.getElementById(id);
 let room = null, lastSfx = undefined, renderSig = "", unwatch = null;
@@ -28,6 +28,7 @@ $("formKode").onsubmit = async (e) => {
     else if (sfx && sfx.id !== lastSfx) { lastSfx = sfx.id; playSound(sfx.kind); duck(); }
     render();
     updateMusic();
+    audioSoal();
   });
   try { document.documentElement.requestFullscreen?.(); } catch (e) {}
 };
@@ -71,7 +72,7 @@ function duck() {
   if (!actx) return;
   ducking = true; setMaster(musikVol() * 0.2, 0.08);
   clearTimeout(duck._t);
-  duck._t = setTimeout(() => { ducking = false; setMaster(musikVol(), 0.8); }, 2200);
+  duck._t = setTimeout(() => { ducking = false; setMaster(audioBerbunyi ? 0 : musikVol(), 0.8); }, 2200);
 }
 
 function stopTrack(fade = 0.8) {
@@ -99,7 +100,7 @@ function playTrack(key, loop, onEnd) {
 
 function updateMusic() {
   if (!actx || !room) return;
-  if (!ducking) setMaster(musikVol());
+  if (!ducking) setMaster(audioBerbunyi ? 0 : musikVol());
   const s = room.state || {};
   const sesiKey = "sesi" + (s.session || 1);
   if (s.phase === "intro") {
@@ -118,6 +119,37 @@ function updateMusic() {
   finalFor = null;
   if (track?.key === "pembukaan" && !track.loop && s.phase === "intro") return;
   if (track?.key !== sesiKey) playTrack(sesiKey, true);
+}
+
+// ---------- Audio soal (misal: lanjutkan ayat) ----------
+let audioEl = null, audioSrc = "", audioRun = null, audioReplay = null, audioBerbunyi = false;
+const FASE_SOAL = ["open", "ready", "buzz", "answering"];
+function audioSoal() {
+  const s = room.state || {}, c = room.current;
+  const url = c?.media && mediaJenis(c.media) === "audio" ? mediaUrl(c.media) : "";
+  if (url !== audioSrc) {                    // soal berganti: hentikan audio lama, siapkan yang baru
+    if (audioEl) { audioEl.pause(); audioEl = null; }
+    audioSrc = url; audioRun = null; audioReplay = s.audioPlay || null;
+    setBerbunyi(false);
+    if (url) { audioEl = new Audio(url); audioEl.preload = "auto";
+      audioEl.onplay = () => setBerbunyi(true);
+      audioEl.onended = audioEl.onpause = () => setBerbunyi(false); }
+  }
+  if (!audioEl) return;
+  // putar otomatis sekali ketika soal benar-benar tampil (setelah hitung mundur)
+  if (FASE_SOAL.includes(s.phase) && !isPaused(s) && audioRun !== s.runId) { audioRun = s.runId; putarAudio(); }
+  // tombol "Putar audio di layar" dari operator
+  if (s.audioPlay && s.audioPlay !== audioReplay) { audioReplay = s.audioPlay; putarAudio(); }
+  if (["reveal", "idle", "intro", "recap", "final"].includes(s.phase) && !audioEl.paused) audioEl.pause();
+}
+function putarAudio() {
+  try { audioEl.currentTime = 0; audioEl.play().catch(() => {}); } catch (e) {}
+}
+function setBerbunyi(v) {
+  audioBerbunyi = v;
+  if (actx && !ducking) setMaster(v ? 0 : musikVol(), v ? 0.3 : 1.2);
+  const ind = $("indAudio");
+  if (ind) ind.classList.toggle("bunyi", v), ind.textContent = v ? "🔊 Audio soal diputar..." : "🔊 Audio soal";
 }
 
 function beep(freq, dur = 0.12, vol = 0.6, type = "sine") {
@@ -227,14 +259,18 @@ function renderMain(s, c, st) {
         <td>${r.ms != null ? (r.ms / 1000).toFixed(2) + " dtk" : "—"}</td><td>${r.points ? "+" + r.points : "0"}</td></tr>`).join("")}</tbody></table></div>`;
   }
 
-  main.classList.toggle("padat", !!hasil);
+  const gambar = c.media && mediaJenis(c.media) === "gambar";
+  const audio = c.media && mediaJenis(c.media) === "audio";
+  main.classList.toggle("padat", !!hasil || !!gambar);
   main.innerHTML = `
     <div class="layar-info"><div class="pesan">${pesan}</div>
       <div class="timer-ring" id="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" stroke="rgba(255,255,255,.2)" stroke-width="9" fill="none"/>
         <circle id="ringArc" cx="50" cy="50" r="44" stroke="#d4a017" stroke-width="9" fill="none" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg>
         <div class="angka" id="ringNum"></div></div></div>
     ${banner}
-    <div class="layar-soal muncul" style="${banner ? "margin-top:2vh" : ""}"><span class="nomor">Soal no. ${c.number}</span>${esc(c.soal)}</div>
+    <div class="layar-soal muncul ${gambar ? "punya-gambar" : ""}" style="${banner ? "margin-top:2vh" : ""}"><span class="nomor">Soal no. ${c.number}</span>
+      <div class="teks-soal">${esc(c.soal)}${audio ? `<div class="ind-audio ${audioBerbunyi ? "bunyi" : ""}" id="indAudio">${audioBerbunyi ? "🔊 Audio soal diputar..." : "🔊 Audio soal"}</div>` : ""}</div>
+      ${gambar ? `<img class="gambar-soal" src="${esc(mediaUrl(c.media))}" alt="">` : ""}</div>
     ${["isian", "lisan"].includes(c.tipe) || (!c.a && !c.b && !c.c && !c.d)
       ? (key ? `<div class="layar-kunci muncul">✔ Jawaban: ${esc(key)}</div>` : s.phase === "judging" ? `<div class="layar-tunggu">⚖️ Juri sedang menilai...</div>` : `<div class="layar-tunggu">${c.tipe === "lisan" ? "🗣️ Jawab secara lisan" : "✍️ Soal isian singkat"}</div>`)
       : `<div class="layar-opsi">${OPTIONS.map((o, i) => `<div class="${key ? (o === key ? "benar" : "redup") : "opsi-masuk"}" style="animation-delay:${0.15 + i * 0.12}s"><b>${o}</b><span>${esc(c[o.toLowerCase()])}</span></div>`).join("")}</div>`}
@@ -343,3 +379,4 @@ setInterval(tick, 100);
 
 // untuk pemeriksaan: lagu yang sedang diputar
 window.__cc = { musik: () => track?.key || null, vol: () => master?.gain.value };
+window.__cc.audio = () => ({ src: audioSrc, main: !!audioEl && !audioEl.paused, t: audioEl ? +audioEl.currentTime.toFixed(1) : null, bunyi: audioBerbunyi });

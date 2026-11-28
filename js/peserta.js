@@ -1,7 +1,7 @@
 import {
   db, ref, onValue, set, update, serverTimestamp, increment, onDisconnect, ensureAnon, watchPublicRoom,
-  SESI_NAMA, OPTIONS, isPaused, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
-} from "./common.js?v=20261128170247";
+  SESI_NAMA, OPTIONS, isPaused, mediaJenis, mediaUrl, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
+} from "./common.js?v=20261128202713";
 
 const $ = (id) => document.getElementById(id);
 let code = null, uid = null, room = null, me = null, unwatch = null;
@@ -151,7 +151,9 @@ function render() {
   renderSig = sig;
 
   let h = "";
-  const soalBox = c ? `<div class="hp-soal"><div class="small muted">Soal no. ${c.number}</div>${esc(c.soal)}</div>` : "";
+  const mj = mediaJenis(c?.media);
+  const soalBox = c ? `<div class="hp-soal"><div class="small muted">Soal no. ${c.number}</div>${esc(c.soal)}
+    ${mj === "gambar" ? `<img src="${esc(mediaUrl(c.media))}" alt="" class="hp-gambar">` : mj === "audio" ? `<div class="small" style="margin-top:.5rem;color:var(--hijau)">🔊 Dengarkan audio soal di layar</div>` : ""}</div>` : "";
   const lisan = c?.tipe === "lisan";
   const tanpaOpsi = !!c && !c.a && !c.b && !c.c && !c.d;            // pengaman: soal tanpa opsi bukan PG
   const isian = c?.tipe === "isian" || lisan || tanpaOpsi;   // isian & lisan: kunci berupa teks

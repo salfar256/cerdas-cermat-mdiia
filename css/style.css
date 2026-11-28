@@ -306,3 +306,13 @@ body.layar { background: radial-gradient(circle at 20% 10%, #127a4f, var(--hijau
 
 /* HP: hitung mundur */
 .hp-hitung { font-size: 7rem; font-weight: 900; color: var(--hijau); text-align: center; line-height: 1; }
+
+/* media soal */
+.layar-soal.punya-gambar { display: flex; gap: 2vw; align-items: center; }
+.layar-soal .teks-soal { flex: 1; min-width: 0; }
+.gambar-soal { max-height: min(34vh, 30vw); max-width: 28vw; border-radius: 1.2vw; box-shadow: 0 1vh 3vh rgba(0,0,0,.25); flex: none; object-fit: contain; animation: muncul .6s ease-out .2s both; }
+.layar-main.padat .layar-soal.punya-gambar .gambar-soal { max-height: min(26vh, 24vw); }
+.layar-main.padat .layar-soal.punya-gambar { padding-top: 1.6vh; padding-bottom: 1.6vh; }
+.ind-audio { display: inline-block; margin-top: 1.5vh; font-size: min(1.6vw, 2.8vh); background: var(--hijau-muda); color: var(--hijau-tua); padding: .6vh 1.2vw; border-radius: 999px; }
+.ind-audio.bunyi { background: var(--emas); color: #2b1d00; animation: kedip 1s ease-in-out infinite; }
+.hp-gambar { display: block; max-width: 100%; max-height: 220px; margin: .7rem auto 0; border-radius: 10px; }
