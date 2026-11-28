@@ -258,3 +258,51 @@ body.layar { background: radial-gradient(circle at 20% 10%, #127a4f, var(--hijau
 .badge-st.pergi { background: var(--merah); color: #fff; animation: kedip 1s infinite; }
 .badge-st.catat { background: #fde2e4; color: var(--merah); }
 .badge-st.putus { background: #333; color: #fff; }
+
+/* ================= Suasana layar proyektor ================= */
+@keyframes muncul { from { opacity: 0; transform: translateY(2vh) scale(.98); } to { opacity: 1; transform: none; } }
+.muncul { animation: muncul .5s ease-out both; }
+.opsi-masuk { animation: muncul .45s ease-out both; }
+.garis-emas.lebar { width: 18vw; height: .6vh; }
+
+/* pembukaan sesi */
+.intro .intro-sesi { font-size: 2.2vw; font-weight: 800; letter-spacing: 1.2vw; color: var(--emas); animation: masukAtas .8s ease-out both; }
+.intro .intro-judul { font-size: 7vw; margin: .5vh 0; text-shadow: 0 1vh 3vh rgba(0,0,0,.35); animation: zoomMasuk 1s cubic-bezier(.2,1.4,.4,1) .3s both, kilau 3s ease-in-out 1.5s infinite; }
+.intro .intro-aturan { font-size: 1.9vw; margin: .8vh 0; animation: muncul .6s ease-out both; }
+@keyframes masukAtas { from { opacity: 0; transform: translateY(-4vh); letter-spacing: 3vw; } to { opacity: 1; transform: none; } }
+@keyframes zoomMasuk { from { opacity: 0; transform: scale(2.2); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes kilau { 50% { text-shadow: 0 0 3vh rgba(212,160,23,.8), 0 1vh 3vh rgba(0,0,0,.35); } }
+
+/* hitung mundur */
+.hitung { font-size: 22vh; font-weight: 900; line-height: 1; margin: 3vh 0; color: var(--emas); text-shadow: 0 1vh 4vh rgba(0,0,0,.4); }
+.hitung.pop { animation: pop .9s ease-out both; }
+@keyframes pop { 0% { transform: scale(2.4); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 80% { opacity: 1; } 100% { transform: scale(.7); opacity: .2; } }
+
+/* papan skor */
+.layar-score .tim .rank { font-size: .75em; opacity: .75; }
+.layar-score .tim.naik { animation: skorNaik 1.3s ease-out; }
+.layar-score .tim.turun { animation: skorTurun 1.3s ease-out; }
+@keyframes skorNaik { 20% { transform: translateY(-1.5vh) scale(1.07); box-shadow: 0 0 0 .5vw #b8ffd5, 0 0 4vh #1fae63; } }
+@keyframes skorTurun { 15%, 45% { transform: translateX(-.8vw); } 30%, 60% { transform: translateX(.8vw); } 20% { box-shadow: 0 0 0 .5vw #ffb4b4; } }
+.delta.plus { background: #1fae63; animation: deltaNaik 2.2s ease-out both; }
+.delta.minus { background: #8c0f1c; animation: deltaNaik 2.2s ease-out both; }
+@keyframes deltaNaik { 0% { opacity: 0; transform: translateY(2vh); } 15% { opacity: 1; transform: none; } 100% { opacity: 1; } }
+
+/* kilat pengumuman pemimpin */
+.flash { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.5); z-index: 40; pointer-events: none; opacity: 0;
+  background: linear-gradient(135deg, #f4c430, #d4a017); color: #2b1d00; font-size: 4vw; font-weight: 900; padding: 2.5vh 4vw; border-radius: 2vw;
+  box-shadow: 0 2vh 6vh rgba(0,0,0,.45); white-space: nowrap; }
+.flash.tampil { animation: kilat 2.8s ease-out both; }
+@keyframes kilat { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) rotate(-6deg); } 15% { opacity: 1; transform: translate(-50%,-50%) scale(1.1) rotate(2deg); }
+  25% { transform: translate(-50%,-50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-60%) scale(1); } }
+
+/* rekap & podium */
+.hasil-tabel.rekap { max-width: 70vw; margin: 3vh auto 0; }
+.hasil-tabel.rekap td, .hasil-tabel.rekap th { font-size: min(1.8vw, 3vh); padding: 1vh 1vw; }
+.baris-rekap { animation: muncul .5s ease-out both; }
+.kolom-aktif { color: var(--emas); font-weight: 800; }
+.naik-podium { animation: podiumNaik 1s cubic-bezier(.2,1.2,.4,1) both; }
+@keyframes podiumNaik { from { opacity: 0; transform: translateY(30vh); } to { opacity: 1; transform: none; } }
+
+/* HP: hitung mundur */
+.hp-hitung { font-size: 7rem; font-weight: 900; color: var(--hijau); text-align: center; line-height: 1; }

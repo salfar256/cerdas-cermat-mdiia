@@ -7,7 +7,7 @@
   <title>Operator · Cerdas Cermat MDIIA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261127233937">
+  <link rel="stylesheet" href="css/style.css?v=20261128170247">
 </head>
 <body>
   <div class="topbar">
@@ -77,6 +77,8 @@
         <div class="card">
           <div class="row between"><h2 style="margin:0">Catatan</h2>
             <div class="row">
+              <button class="btn abu kecil" id="btnIntro">🎬 Pembukaan sesi</button>
+              <button class="btn abu kecil" id="btnRekap">📊 Rekap sesi</button>
               <button class="btn abu kecil" id="btnIdle">Layar skor</button>
               <button class="btn emas kecil" id="btnJuara">🏆 Tampilkan juara</button>
             </div>
@@ -120,6 +122,11 @@
               <div><label>Sesi 3: waktu buzzer (detik)</label><input type="number" id="s3BuzzTime"></div>
               <div><label>Sesi 3: waktu menjawab (detik)</label><input type="number" id="s3AnswerTime"></div>
             </div>
+            <div class="grid two">
+              <div><label>Hitung mundur sebelum soal (detik, 0 = tanpa)</label><input type="number" id="hitungMundur"></div>
+              <div><label>Volume musik latar: <span id="volTeks"></span>%</label><input type="range" id="musikVol" min="0" max="100" step="5" style="width:100%"></div>
+            </div>
+            <label class="row" style="font-weight:500"><input type="checkbox" id="musik"> Putar musik latar di layar proyektor</label>
             <div class="row"><button class="btn kecil">Simpan pengaturan</button><button type="button" class="btn abu kecil" id="setDefault">Kembalikan bawaan</button></div>
           </form>
           <label class="row small" style="margin-top:.8rem;font-weight:500"><input type="checkbox" id="suaraOp"> Bunyikan suara juga di perangkat operator</label>
@@ -128,6 +135,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/operator.js?v=20261127233937"></script>
+  <script type="module" src="js/operator.js?v=20261128170247"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@ import {
 import {
   getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261127233937";
+import { firebaseConfig } from "./firebase-config.js?v=20261128170247";
 
 export const CONFIG_OK = !String(firebaseConfig.apiKey || "").startsWith("ISI");
 if (!CONFIG_OK) {
@@ -52,7 +52,10 @@ export const DEFAULT_SETTINGS = {
   s3Wrong: 50,             // sesi 3 salah (dikurangi)
   s3Delay: 3,              // jeda baca soal sebelum buzzer aktif
   s3BuzzTime: 15,          // waktu menekan buzzer
-  s3AnswerTime: 10         // waktu menjawab setelah menang buzzer
+  s3AnswerTime: 10,        // waktu menjawab setelah menang buzzer
+  hitungMundur: 3,         // hitung mundur 3-2-1 sebelum soal (0 = tanpa)
+  musik: true,             // musik latar di layar proyektor
+  musikVol: 35             // volume musik latar (0-100)
 };
 
 export function settingsOf(room) {
@@ -88,7 +91,7 @@ export async function ensureAnon() {
   return cred.user;
 }
 
-export const TIMER_PHASES = ["open", "ready", "buzz", "answering"];
+export const TIMER_PHASES = ["countdown", "open", "ready", "buzz", "answering"];
 export const isPaused = (state) => !!(state && state.paused && TIMER_PHASES.includes(state.phase));
 
 export function secondsLeft(state) {

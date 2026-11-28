@@ -29,6 +29,13 @@ Alamat setelah aktif: **https://salfar256.github.io/cerdas-cermat-mdiia/**
 
 Satu paket boleh mencampur ketiganya.
 
+**Suasana layar proyektor:**
+- Musik latar berbeda untuk tiap sesi (berulang tanpa jeda), mengecil otomatis saat bunyi buzzer/benar/salah. Bisa dimatikan dan diatur volumenya dari operator.
+- Pembukaan sesi: saat operator berpindah sesi, layar menampilkan judul sesi beranimasi dengan musik pembukaan, lalu musik sesi dimulai. Bisa diulang dengan tombol 🎬 Pembukaan sesi.
+- Hitung mundur 3-2-1 dengan bunyi sebelum setiap soal (bisa diatur/dimatikan), dan detak di 5 detik terakhir.
+- Skor bergulir naik/turun, 👑 untuk pemimpin, pengumuman saat pemimpin berganti.
+- 📊 Rekap sesi: tabel skor per sesi. Layar juara dengan podium naik dan musik pembukaan.
+
 **Tombol SIAP & pengawasan:** setelah memilih kelompok, peserta menekan SAYA SIAP. Sejak itu, jika HP/laptop peserta berpindah tab, membuka aplikasi lain, atau mengunci layar, operator langsung mendapat peringatan (banner merah, status kelompok, catatan) dan peserta melihat peringatan saat kembali. Jumlah pelanggaran tercatat per kelompok.
 
 **Jeda waktu:** tombol ⏸ di operator membekukan timer di semua layar dan HP; tekan ▶ untuk melanjutkan dari sisa waktu yang sama.

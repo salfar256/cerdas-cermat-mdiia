@@ -2,8 +2,8 @@ import {
   auth, db, ref, onValue, get, set, update, remove, push, serverTimestamp, increment, signOut,
   serverNow, SESI_NAMA, SESI_PENDEK, TEAM_COLORS, TEAM_IDS, OPTIONS, DEFAULT_SETTINGS,
   settingsOf, esc, teamList, secondsLeft, preloadSounds, unlockSounds, playSound, fmtScore
-} from "./common.js?v=20261127233937";
-import { requireAdmin, toast } from "./admin-auth.js?v=20261127233937";
+} from "./common.js?v=20261128170247";
+import { requireAdmin, toast } from "./admin-auth.js?v=20261128170247";
 
 const $ = (id) => document.getElementById(id);
 let bank = {};
@@ -127,24 +127,37 @@ function handleSfx() {
 const SET_KEYS = Object.keys(DEFAULT_SETTINGS);
 function fillSettings() {
   const st = settingsOf(room);
-  SET_KEYS.forEach((k) => $(k).value = st[k]);
+  SET_KEYS.forEach((k) => { if (k === "musik") $(k).checked = st[k] !== false; else $(k).value = st[k]; });
+  $("volTeks").textContent = $("musikVol").value;
 }
 $("formSet").onsubmit = async (e) => {
   e.preventDefault();
   const v = {};
-  SET_KEYS.forEach((k) => v[k] = k === "s2Points" ? $(k).value.replace(/\s/g, "") : Math.max(0, Number($(k).value) || 0));
+  SET_KEYS.forEach((k) => v[k] = k === "musik" ? $(k).checked : k === "s2Points" ? $(k).value.replace(/\s/g, "") : Math.max(0, Number($(k).value) || 0));
   await set(ref(db, `rooms/${code}/settings`), v); toast("Pengaturan disimpan");
 };
-$("setDefault").onclick = () => { SET_KEYS.forEach((k) => $(k).value = DEFAULT_SETTINGS[k]); };
+$("setDefault").onclick = () => { SET_KEYS.forEach((k) => { if (k === "musik") $(k).checked = DEFAULT_SETTINGS[k]; else $(k).value = DEFAULT_SETTINGS[k]; }); $("volTeks").textContent = $("musikVol").value; };
+// musik: langsung tersimpan tanpa menekan Simpan, agar bisa diatur saat lomba berjalan
+$("musikVol").oninput = () => { $("volTeks").textContent = $("musikVol").value; };
+$("musikVol").onchange = () => update(ref(db, `rooms/${code}/settings`), { musikVol: Number($("musikVol").value) });
+$("musik").onchange = () => update(ref(db, `rooms/${code}/settings`), { musik: $("musik").checked });
 
 // ---------- Sesi ----------
 $("sesiTabs").onclick = async (e) => {
   const sesi = Number(e.target.dataset.sesi);
-  if (!sesi || sesi === S().session && S().phase === "idle") return;
+  if (!sesi || sesi === S().session && ["idle", "intro"].includes(S().phase)) return;
   if (isActive() && !confirm("Soal sedang berjalan. Pindah sesi sekarang?")) return;
-  await update(R(), { state: { session: sesi, phase: "idle", msg: "" }, current: null, reveal: null });
+  await update(R(), { state: { session: sesi, phase: "intro", introId: Date.now(), msg: "" }, current: null, reveal: null });
 };
-function isActive() { return ["open", "ready", "buzz", "answering", "judging"].includes(S().phase); }
+function isActive() { return ["countdown", "open", "ready", "buzz", "answering", "judging"].includes(S().phase); }
+$("btnIntro").onclick = async () => {
+  if (isActive() && !confirm("Soal sedang berjalan. Tampilkan pembukaan sesi sekarang?")) return;
+  await update(R(), { state: { session: S().session || 1, phase: "intro", introId: Date.now(), msg: "" }, current: null, reveal: null });
+};
+$("btnRekap").onclick = async () => {
+  if (isActive() && !confirm("Soal sedang berjalan. Tampilkan rekap sekarang?")) return;
+  await update(R(), { "state/phase": "recap", "state/recapSesi": S().session || 1, "state/msg": "", "state/paused": null });
+};
 
 // ---------- Daftar soal ----------
 const normSoal = (t) => String(t || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -228,6 +241,13 @@ $("btnMulai").onclick = async () => {
     state.phase = "ready"; state.endsAt = serverNow() + st.s3Delay * 1000;
     state.msg = "Baca soal... buzzer segera dibuka";
   }
+  if (st.hitungMundur > 0) {
+    // tahan dulu di fase hitung mundur; mesin akan membuka fase berikutnya
+    state.nextPhase = state.phase;
+    state.nextDur = Math.round((state.endsAt - serverNow()) / 1000);
+    state.phase = "countdown";
+    state.endsAt = serverNow() + st.hitungMundur * 1000;
+  }
   Object.assign(upd, {
     state,
     current: isIsian(q)
@@ -248,7 +268,7 @@ $("btnMulai").onclick = async () => {
 // Saat dijeda: sisa waktu disimpan, endsAt digeser jauh ke depan agar tidak ada yang kedaluwarsa.
 $("btnJeda").onclick = async () => {
   const s = S();
-  if (!["open", "ready", "buzz", "answering"].includes(s.phase)) return;
+  if (!["countdown", "open", "ready", "buzz", "answering"].includes(s.phase)) return;
   if (!s.paused) {
     const left = Math.max(0, s.endsAt - serverNow());
     const upd = { "state/paused": true, "state/pausedLeft": left, "state/endsAt": serverNow() + 6 * 3600 * 1000 };
@@ -285,7 +305,7 @@ $("btnJuara").onclick = () => update(R(), { "state/phase": "final", "state/msg":
 $("btnResetSkor").onclick = async () => {
   if (!confirm("Reset lomba? Semua skor jadi 0, tanda soal terpakai dihapus, dan catatan dikosongkan.")) return;
   const upd = { used: null, answers: null, buzz: null, log: null, current: null, reveal: null, "meta/count": null, "meta/s1count": null, judge: null, state: { session: 1, phase: "idle", msg: "" } };
-  teamList(room).forEach((t) => { upd[`teams/${t.id}/score`] = 0; if (room.status?.[t.id]) upd[`status/${t.id}/pelanggaran`] = 0; });
+  teamList(room).forEach((t) => { upd[`teams/${t.id}/score`] = 0; upd[`teams/${t.id}/per`] = null; if (room.status?.[t.id]) upd[`status/${t.id}/pelanggaran`] = 0; });
   await update(R(), upd);
 };
 
@@ -294,7 +314,7 @@ $("tim").onclick = async (e) => {
   const d = e.target.dataset;
   if (d.adj) {
     const [t, v] = d.adj.split("|"); const val = Number(v);
-    const upd = { [`teams/${t}/score`]: increment(val) };
+    const upd = { [`teams/${t}/score`]: increment(val), [`teams/${t}/per/s${S().session || 1}`]: increment(val) };
     logEntry(upd, `Koreksi manual ${room.teams[t].name}: ${val > 0 ? "+" : ""}${val}`);
     await update(R(), upd);
   }
@@ -339,6 +359,7 @@ function engine() {
       if (semua || expired) { if (isian) act(base + "|judge", toJudging); else act(base + "|fin", () => finalizeS2()); }
     }
   }
+  if (s.phase === "countdown" && now >= s.endsAt) act(`${base}|cd`, afterCountdown);
   if (s.phase === "ready" && now >= s.endsAt) act(`${base}|${s.buzzKey}|open`, openBuzz);
   if (s.phase === "buzz") {
     const b = room.buzz?.[s.qid]?.[s.buzzKey];
@@ -360,6 +381,12 @@ const isIsian = dinilaiJuri;
 const TIPE_LABEL = { pg: "Pilihan ganda", isian: "Isian singkat", lisan: "Jawab lisan" };
 const ansStr = (a) => (a ? (a.choice ?? a.text ?? null) : null);
 
+async function afterCountdown() {
+  const s = S();
+  await update(R(), { "state/phase": s.nextPhase || "open", "state/endsAt": serverNow() + (s.nextDur || 30) * 1000,
+    "state/openedAt": serverTimestamp(), "state/paused": null, "state/pausedLeft": null });
+}
+
 async function toJudging() {
   await update(R(), { "state/paused": null, "state/pausedLeft": null, "state/phase": "judging", "state/msg": "Menunggu keputusan juri..." });
 }
@@ -376,7 +403,7 @@ async function finalizeS1(verdict) {
     "state/msg": correct ? `${nm} BENAR! +${pts}` : (a || isian ? `${nm} salah. Soal hangus.` : `Waktu habis. Soal hangus.`),
     reveal: { qid: s.qid, key, results: { [s.turnTeam]: { choice: ansStr(a) || (isian ? "(lisan)" : null), correct, points: pts } } }
   };
-  if (pts) upd[`teams/${s.turnTeam}/score`] = increment(pts);
+  if (pts) { upd[`teams/${s.turnTeam}/score`] = increment(pts); upd[`teams/${s.turnTeam}/per/s${S().session || 1}`] = increment(pts); }
   sfx(upd, correct ? "benar" : "salah");
   logEntry(upd, `S1 no.${s.number} · ${nm}: ${ansStr(a) || (isian ? "lisan" : "tidak menjawab")} → ${correct ? "+" + pts : "0"}`);
   upd["state/paused"] = null; upd["state/pausedLeft"] = null;
@@ -402,7 +429,7 @@ async function finalizeS2(judged) {
     let pts = 0, r = null;
     if (correct) { pts = table[rank] ?? table[table.length - 1]; rank++; r = rank; }
     results[a.t] = { choice: ansStr(a), correct, points: pts, rank: r, ms: Math.max(0, a.ts - (s.openedAt || a.ts)) };
-    if (pts) upd[`teams/${a.t}/score`] = increment(pts);
+    if (pts) { upd[`teams/${a.t}/score`] = increment(pts); upd[`teams/${a.t}/per/s${S().session || 1}`] = increment(pts); }
     ringkas.push(`${room.teams[a.t]?.name}: ${ansStr(a)}${correct ? " +" + pts : " ✗"}`);
   });
   teamList(room).forEach((t) => { if (!results[t.id]) results[t.id] = { choice: null, correct: false, points: 0, rank: null }; });
@@ -453,7 +480,7 @@ async function gradeS3(verdict) {
   const upd = {};
   if (correct) {
     s3log[team] = { choice: ansStr(a) || lisan, correct: true, points: st.s3Correct };
-    upd[`teams/${team}/score`] = increment(st.s3Correct);
+    { upd[`teams/${team}/score`] = increment(st.s3Correct); upd[`teams/${team}/per/s${S().session || 1}`] = increment(st.s3Correct); }
     upd["state/phase"] = "reveal";
     upd["state/msg"] = `${nm} BENAR! +${st.s3Correct}`;
     upd["state/s3log"] = s3log;
@@ -463,7 +490,7 @@ async function gradeS3(verdict) {
   } else {
     const pen = st.s3Wrong;
     s3log[team] = { choice: ansStr(a) || lisan, correct: false, points: -pen };
-    if (pen) upd[`teams/${team}/score`] = increment(-pen);
+    if (pen) { upd[`teams/${team}/score`] = increment(-pen); upd[`teams/${team}/per/s${S().session || 1}`] = increment(-pen); }
     const locked = { ...(s.locked || {}), [team]: true };
     const sisa = teamList(room).filter((t) => t.uid && !locked[t.id]);
     upd["state/s3log"] = s3log;
@@ -501,11 +528,11 @@ function render() {
   cekPeringatan();
   renderLog();
   $("btnTutup").disabled = !["open", "buzz", "answering"].includes(s.phase);
-  const bisaJeda = ["open", "ready", "buzz", "answering"].includes(s.phase);
+  const bisaJeda = ["countdown", "open", "ready", "buzz", "answering"].includes(s.phase);
   $("btnJeda").disabled = !bisaJeda;
   $("btnJeda").textContent = bisaJeda && s.paused ? "▶ Lanjutkan waktu" : "⏸ Jeda waktu";
   $("btnJeda").className = "btn " + (bisaJeda && s.paused ? "" : "emas");
-  $("btnLewati").disabled = !s.qid || ["reveal", "idle", "final"].includes(s.phase);
+  $("btnLewati").disabled = !s.qid || ["reveal", "idle", "final", "intro", "recap"].includes(s.phase);
 }
 
 const FASE = {
@@ -514,6 +541,9 @@ const FASE = {
   ready: "Jeda baca soal",
   buzz: "Buzzer dibuka",
   answering: "Menunggu jawaban penekan buzzer",
+  intro: "Pembukaan sesi (musik pembukaan diputar di layar)",
+  countdown: "Hitung mundur sebelum soal",
+  recap: "Layar menampilkan rekap sesi",
   judging: "Menunggu keputusan juri (klik Benar/Salah)",
   reveal: "Jawaban ditampilkan",
   final: "Layar menampilkan juara"
@@ -522,7 +552,7 @@ const FASE = {
 function renderStatus() {
   if (!room) return;
   const s = S();
-  const sisa = ["open", "ready", "buzz", "answering"].includes(s.phase) ? ` · ${s.paused ? "⏸ DIJEDA, sisa" : "⏱"} ${Math.ceil(secondsLeft(s))} dtk` : "";
+  const sisa = ["countdown", "open", "ready", "buzz", "answering"].includes(s.phase) ? ` · ${s.paused ? "⏸ DIJEDA, sisa" : "⏱"} ${Math.ceil(secondsLeft(s))} dtk` : "";
   let extra = "";
   if (s.phase === "open" && s.qid) {
     const ans = room.answers?.[s.qid] || {};

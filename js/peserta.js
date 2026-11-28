@@ -1,7 +1,7 @@
 import {
   db, ref, onValue, set, update, serverTimestamp, increment, onDisconnect, ensureAnon, watchPublicRoom,
   SESI_NAMA, OPTIONS, isPaused, esc, teamList, sortedTeams, secondsLeft, getParam, fmtScore
-} from "./common.js?v=20261127233937";
+} from "./common.js?v=20261128170247";
 
 const $ = (id) => document.getElementById(id);
 let code = null, uid = null, room = null, me = null, unwatch = null;
@@ -168,7 +168,13 @@ function render() {
   const msg = (ico, text, sub = "") => `<div class="hp-msg"><span class="big">${ico}</span>${text}${sub ? `<div class="small muted" style="font-weight:500;margin-top:.4rem">${sub}</div>` : ""}</div>`;
   const nm = (id) => esc(room.teams[id]?.name || "");
 
-  if (s.phase === "idle" || !s.phase) {
+  if (s.phase === "intro") {
+    h = msg("🎬", SESI_NAMA[s.session || 1], "Simak pembukaan sesi di layar");
+  } else if (s.phase === "recap") {
+    h = msg("📊", `Rekap ${SESI_NAMA[s.recapSesi || s.session || 1]}`, `Anda peringkat ${pos} · skor ${fmtScore(t.score)}`);
+  } else if (s.phase === "countdown") {
+    h = `<div class="center muted">Soal no. ${c?.number || ""} segera tampil</div><div class="hp-hitung" id="hpHitung"></div>`;
+  } else if (s.phase === "idle" || !s.phase) {
     h = msg("⏳", "Menunggu soal berikutnya", SESI_NAMA[s.session || 1]);
   } else if (s.phase === "final") {
     h = msg(pos === 1 ? "🏆" : "🎖️", `Peringkat ${pos}`, `Skor akhir ${fmtScore(t.score)}`) +
@@ -270,9 +276,10 @@ function tick() {
   const s = room?.state;
   if (!s) return;
   const aktif = ["open", "ready", "buzz", "answering"].includes(s.phase);
-  $("timer").textContent = aktif ? `${isPaused(s) ? "⏸" : "⏱"} ${Math.ceil(secondsLeft(s))}` : "";
+  if (s.phase === "countdown" && $("hpHitung")) $("hpHitung").textContent = isPaused(s) ? "⏸" : Math.max(1, Math.ceil(secondsLeft(s)));
+  $("timer").textContent = s.phase === "countdown" ? "" : aktif ? `${isPaused(s) ? "⏸" : "⏱"} ${Math.ceil(secondsLeft(s))}` : "";
 }
-setInterval(tick, 250);
+setInterval(tick, 150);
 
 // Jaga layar HP tetap menyala selama lomba
 async function keepAwake() { try { await navigator.wakeLock?.request("screen"); } catch (e) {} }
